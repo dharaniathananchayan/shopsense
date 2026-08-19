@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Any
 from datetime import datetime
 
 class TransactionCreate(BaseModel):
@@ -58,3 +58,28 @@ class PlatformSummary(BaseModel):
     total_customers: int
     total_transactions: int
     total_revenue: float
+
+
+class CustomerSegmentResponse(BaseModel):
+    """Customer enriched with segmentation data."""
+    customer_id: int
+    first_name: str
+    last_name: str
+    email: str
+    total_spent: float
+    order_count: int
+    segment: str  # VIP | Regular | Occasional
+
+
+class ValidationCheck(BaseModel):
+    """Result of a single data-integrity check."""
+    check_name: str
+    passed: bool
+    detail: str
+    anomalies: List[Any] = []
+
+
+class HistoricalValidationReport(BaseModel):
+    """Overall report returned by the historical data validation endpoint."""
+    overall_passed: bool
+    checks: List[ValidationCheck]

@@ -7,7 +7,8 @@ from typing import Any, Dict, Optional
 logger = logging.getLogger("shopsense.ai")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+GROQ_CANDIDATE_MODELS = [GROQ_MODEL, "openai/gpt-oss-20b", "qwen/qwen3.6-27b", "allam-2-7b", "groq/compound-mini"]
 
 
 def _as_text_list(value: Any) -> list[str]:
@@ -38,22 +39,43 @@ Return a JSON object only with exactly these keys: tagline (string), description
 hashtag strings), target_keywords (3 to 6 strings), and seo_score (0 to 100).
 Never invent product specifications that were not supplied."""
 
-    response = httpx.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-        json={
-            "model": GROQ_MODEL,
-            "messages": [
-                {"role": "system", "content": "You write factual, SEO-friendly marketplace listings."},
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.55,
-            "response_format": {"type": "json_object"},
-        },
-        timeout=20.0,
-    )
-    response.raise_for_status()
-    parsed = json.loads(response.json()["choices"][0]["message"]["content"])
+    last_exc = None
+    used_model = GROQ_MODEL
+    candidates = list(dict.fromkeys(GROQ_CANDIDATE_MODELS))
+
+    for model in candidates:
+        try:
+            response = httpx.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": "You write factual, SEO-friendly marketplace listings. Output pure JSON."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.55,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=20.0,
+            )
+            response.raise_for_status()
+            raw = response.json()["choices"][0]["message"]["content"]
+            clean_json = raw.strip()
+            if clean_json.startswith("```json"):
+                clean_json = clean_json[7:]
+            if clean_json.startswith("```"):
+                clean_json = clean_json[3:]
+            if clean_json.endswith("```"):
+                clean_json = clean_json[:-3]
+            parsed = json.loads(clean_json.strip())
+            used_model = model
+            break
+        except Exception as e:
+            last_exc = e
+            continue
+    else:
+        raise last_exc or ValueError("Groq product generation failed")
     required = {"tagline", "description", "highlights", "seo_tags", "target_keywords", "seo_score"}
     if not required.issubset(parsed):
         raise ValueError("Groq response did not include the expected listing fields")

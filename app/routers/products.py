@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, ProductApprovalUpdate
+from app.schemas.product import (
+    ProductCreate, ProductUpdate, ProductResponse, ProductApprovalUpdate,
+    StockLevelResponse, LowStockAlertResponse,
+)
 from app.crud import product as crud_product
 from app.crud.auth import get_current_user, require_role
 from app.models.user import User
@@ -15,10 +18,69 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), curren
     return crud_product.create_product(db=db, product=product, approval_status="APPROVED")
 
 @router.get("/", response_model=list[ProductResponse])
-def read_products(skip: int = 0, limit: int = 100, vendor_id: int = None, category: str = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def read_products(skip: int = 0, limit: int = 100, vendor_id: int = None, category: str = None, db: Session = Depends(get_db)):
+    """Public catalog feed used by the unauthenticated forecasting page."""
+    return crud_product.get_products(db=db, skip=skip, limit=limit, vendor_id=vendor_id, category=category)
+
+
+@router.get("/inventory/stock-levels", response_model=list[StockLevelResponse])
+def stock_levels(
+    vendor_id: int = None,
+    category: str = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Return current stock quantities for all products.
+    VENDORs are automatically scoped to their own products.
+    """
     if current_user.role == "VENDOR":
         vendor_id = current_user.vendor_id
-    return crud_product.get_products(db=db, skip=skip, limit=limit, vendor_id=vendor_id, category=category)
+    products = crud_product.get_stock_levels(
+        db=db, vendor_id=vendor_id, category=category, skip=skip, limit=limit
+    )
+    return [
+        StockLevelResponse(
+            product_id=p.id,
+            product_name=p.product_name,
+            category=p.category,
+            vendor_id=p.vendor_id,
+            stock_quantity=p.stock_quantity,
+            price=p.price,
+            is_active=p.is_active,
+        )
+        for p in products
+    ]
+
+
+@router.get("/inventory/low-stock", response_model=list[LowStockAlertResponse])
+def low_stock_alerts(
+    threshold: int = 10,
+    vendor_id: int = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Return products whose stock quantity is at or below `threshold` (default 10).
+    VENDORs are automatically scoped to their own products.
+    """
+    if current_user.role == "VENDOR":
+        vendor_id = current_user.vendor_id
+    products = crud_product.get_low_stock_products(
+        db=db, threshold=threshold, vendor_id=vendor_id
+    )
+    return [
+        LowStockAlertResponse(
+            product_id=p.id,
+            product_name=p.product_name,
+            category=p.category,
+            vendor_id=p.vendor_id,
+            stock_quantity=p.stock_quantity,
+            threshold=threshold,
+            price=p.price,
+        )
+        for p in products
+    ]
 
 @router.get("/{product_id}", response_model=ProductResponse)
 def read_product(product_id: int, db: Session = Depends(get_db)):

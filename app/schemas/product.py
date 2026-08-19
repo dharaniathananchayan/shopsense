@@ -39,3 +39,31 @@ class ProductResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class StockLevelResponse(BaseModel):
+    """Current stock level for a single product."""
+    product_id: int
+    product_name: str
+    category: Optional[str] = None
+    vendor_id: int
+    stock_quantity: int
+    price: float
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class LowStockAlertResponse(BaseModel):
+    """Product that has fallen below the low-stock threshold."""
+    product_id: int
+    product_name: str
+    category: Optional[str] = None
+    vendor_id: int
+    stock_quantity: int
+    threshold: int
+    price: float
+
+    class Config:
+        from_attributes = True

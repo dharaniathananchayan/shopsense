@@ -55,3 +55,31 @@ def set_product_approval(db: Session, product_id: int, approval_status: str, app
     db.commit()
     db.refresh(product)
     return product
+
+
+def get_stock_levels(
+    db: Session,
+    vendor_id: int | None = None,
+    category: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[Product]:
+    """Return all products with their current stock quantities."""
+    query = db.query(Product)
+    if vendor_id:
+        query = query.filter(Product.vendor_id == vendor_id)
+    if category:
+        query = query.filter(Product.category == category)
+    return query.order_by(Product.stock_quantity.asc()).offset(skip).limit(limit).all()
+
+
+def get_low_stock_products(
+    db: Session,
+    threshold: int = 10,
+    vendor_id: int | None = None,
+) -> list[Product]:
+    """Return products whose stock_quantity is at or below the given threshold."""
+    query = db.query(Product).filter(Product.stock_quantity <= threshold)
+    if vendor_id:
+        query = query.filter(Product.vendor_id == vendor_id)
+    return query.order_by(Product.stock_quantity.asc()).all()
