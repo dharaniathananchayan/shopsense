@@ -15,6 +15,7 @@ from app.routers import (
     recommendations,
     forecasting,
     reviews,
+    websocket,
 )
 
 # Create all tables
@@ -55,6 +56,8 @@ app.include_router(ai.router, prefix="/api/v1")
 app.include_router(recommendations.router, prefix="/api/v1")
 app.include_router(forecasting.router, prefix="/api/v1")
 app.include_router(reviews.router, prefix="/api/v1")
+app.include_router(websocket.router, prefix="/api/v1")
+
 
 frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if (frontend_dist / "assets").exists():

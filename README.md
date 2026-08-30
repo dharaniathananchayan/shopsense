@@ -65,6 +65,19 @@ ShopSense is an AI-powered multi-vendor e-commerce analytics and marketplace man
   - **LLM Sentiment Analysis**: Multi-aspect LLM analysis pipeline ([`sentiment_service.py`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/app/services/sentiment_service.py)) extracting sentiment scores (0–100), label classifications, pros/cons, aspect breakdowns (**Quality, Value, Usability, Durability**), and vendor action items.
   - **Vector Search Recommendations**: Dense TF-IDF vector embeddings with cosine similarity distance providing natural language semantic search, customer taste profile centroid recommendations, and KNN vector neighbors (`/api/v1/recommendations/semantic-search`).
 
+### 🚩 Milestone 3: Advanced APIs & Reporting (Weeks 5–6)
+**Objective:** Build out reporting infrastructure, Business Intelligence (BI) capabilities, real-time event streams, and RAG/Text-to-SQL GenAI assistance.
+
+- ✅ **Base Requirements**:
+  - **Frontend Chart Analytics Endpoints**: Standardized REST endpoints (`/api/v1/analytics/charts/sales-trends`, `/api/v1/analytics/charts/category-distribution`, `/api/v1/analytics/charts/vendor-performance`) serving pre-aggregated time-series and category revenue structures for frontend line, bar, and donut charts.
+  - **Vendor Benchmarking Metrics**: Performance comparison endpoint (`/api/v1/analytics/vendors/{id}/benchmarking`) rating vendor revenue, order volume, AOV, and catalog size against marketplace means with performance ratio badging (*Outperforming*, *On Par*, *Underperforming*).
+  - **CSV Data Export**: Streaming CSV generation (`/api/v1/analytics/export/sales-csv`, `/api/v1/analytics/vendors/{id}/export/sales-csv`) for instant one-click transaction report downloads (`text/csv`).
+
+- ✅ **Advanced / Optional Features**:
+  - **Real-Time Dashboards (WebSockets)**: Asynchronous FastAPI WebSocket subscription engine (`WS /api/v1/ws/sales`) and broadcast triggers (`POST /api/v1/ws/simulate-sale`) pushing live sales event notifications to React dashboard toasts without polling.
+  - **RAG-Powered AI Shopping Assistant**: Natural language catalog chatbot API (`/api/v1/ai/shopping-assistant`) using SQLite retrieval and Groq/LLM generation to answer customer queries with recommendations grounded strictly in catalog inventory via a floating frontend drawer (`ShoppingAssistant.jsx`).
+  - **AI Data Analyst (Text-to-SQL)**: Conversational BI query engine (`/api/v1/ai/data-analyst`) converting natural language seller questions into safe SQLite `SELECT` queries, executing them, and synthesizing executive business insights with clean formatted typography (`AIDataAnalyst.jsx`).
+
 ---
 
 ## 🚀 Getting Started
@@ -120,16 +133,19 @@ shop-sense/
 │   ├── models/                  # Database models (User, Vendor, Product, Customer, Transaction, Review)
 │   ├── schemas/                 # Pydantic validation schemas
 │   ├── crud/                    # Database query abstraction layer
-│   ├── routers/                 # API Endpoints (auth, products, recommendations, forecasting, sentiment, etc.)
+│   ├── routers/                 # API Endpoints (auth, products, recommendations, forecasting, sentiment, websocket, etc.)
 │   └── services/                # AI, ML & Vector engines
 │       ├── ai_service.py        # Groq GenAI SEO listing generator
 │       ├── forecasting_service.py # ARIMA & Holt Exponential Smoothing forecasting
 │       ├── sentiment_service.py # LLM multi-aspect review sentiment analysis
-│       └── vector_service.py    # TF-IDF Cosine Vector DB & KNN Search
+│       ├── vector_service.py    # TF-IDF Cosine Vector DB & KNN Search
+│       ├── ws_manager.py        # WebSocket ConnectionManager real-time sales stream
+│       ├── rag_service.py       # Catalog RAG Shopping Assistant retriever & prompt engine
+│       └── sql_analyst_service.py # Text-to-SQL query generator & business analyst
 ├── frontend/                    # React 19 + Vite dashboard application
 │   ├── src/
-│   │   ├── pages/               # Dashboard pages (Overview, Products, Inventory, Forecasting, Recommendations, etc.)
-│   │   ├── components/          # Navigation & Sidebar components
+│   │   ├── pages/               # Dashboard pages (Overview, Analytics, Inventory, Forecasting, Recommendations, etc.)
+│   │   ├── components/          # Topbar, Sidebar, AIDataAnalyst, ShoppingAssistant components
 │   │   └── index.css            # Responsive layout & design system
 ├── requirements.txt             # Python dependencies
 └── README.md                    # Project documentation

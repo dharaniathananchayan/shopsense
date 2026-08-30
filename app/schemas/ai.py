@@ -24,3 +24,29 @@ class ProductWithAICreate(BaseModel):
     stock_quantity: int = Field(0, ge=0)
     keywords: Optional[str] = Field(None, max_length=200)
     target_audience: Optional[str] = Field("General Customers", max_length=100)
+
+
+class ShoppingAssistantRequest(BaseModel):
+    query: str = Field(..., min_length=2, max_length=300)
+    price_max: Optional[float] = Field(None, ge=0)
+
+
+class ShoppingAssistantResponse(BaseModel):
+    query: str
+    answer: str
+    recommended_products: List[dict]
+    ai_provider: str
+
+
+class DataAnalystRequest(BaseModel):
+    question: str = Field(..., min_length=2, max_length=300)
+    vendor_id: Optional[int] = None
+
+
+class DataAnalystResponse(BaseModel):
+    question: str
+    generated_sql: str
+    query_results: List[dict]
+    analysis_insight: str
+    ai_provider: str
+

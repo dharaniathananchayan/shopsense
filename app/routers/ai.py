@@ -1,15 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.ai import AIGenerateRequest, AIGenerateResponse, ProductWithAICreate
+from app.schemas.ai import (
+    AIGenerateRequest,
+    AIGenerateResponse,
+    ProductWithAICreate,
+    ShoppingAssistantRequest,
+    ShoppingAssistantResponse,
+    DataAnalystRequest,
+    DataAnalystResponse,
+)
 from app.schemas.product import ProductResponse
 from app.services.ai_service import generate_ai_product_content
+from app.services.rag_service import run_rag_shopping_assistant
+from app.services.sql_analyst_service import run_ai_data_analyst
 from app.crud.product import create_product
 from app.schemas.product import ProductCreate
 from app.crud.auth import get_current_user, require_role
 from app.models.user import User
 
-router = APIRouter(prefix="/ai", tags=["AI-Powered Product Descriptions (GenAI)"])
+router = APIRouter(prefix="/ai", tags=["AI & BI Features (GenAI, RAG, Text-to-SQL)"])
 
 @router.post("/generate-description", response_model=AIGenerateResponse)
 def generate_description(request: AIGenerateRequest):
@@ -67,3 +77,43 @@ def create_product_with_ai(
     )
 
     return create_product(db, product_schema, approval_status="APPROVED")
+
+
+@router.post("/shopping-assistant", response_model=ShoppingAssistantResponse)
+def shopping_assistant(
+    request: ShoppingAssistantRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    RAG-Powered AI Shopping Assistant:
+    Customers can ask natural language questions (e.g., "What's the best laptop for video editing under $1000?")
+    and the AI retrieves matching products from the actual catalog and generates an accurate recommendation.
+    """
+    return run_rag_shopping_assistant(
+        db=db,
+        query=request.query,
+        price_max=request.price_max
+    )
+
+
+@router.post("/data-analyst", response_model=DataAnalystResponse)
+def ai_data_analyst(
+    request: DataAnalystRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """
+    AI Data Analyst (Text-to-SQL):
+    Vendors & Admins can ask natural language questions about sales data (e.g., "Why did my sales drop last week?")
+    and the system generates safe SQL queries, executes them, and returns analytical insights.
+    """
+    vendor_id = request.vendor_id
+    if current_user.role == "VENDOR":
+        vendor_id = current_user.vendor_id
+
+    return run_ai_data_analyst(
+        db=db,
+        question=request.question,
+        vendor_id=vendor_id
+    )
+

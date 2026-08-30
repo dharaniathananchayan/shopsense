@@ -31,6 +31,21 @@ export default function Topbar() {
       <div className="topbar-right">
         {session ? (
           <>
+            <button
+              className="btn btn-secondary btn-xs"
+              onClick={async () => {
+                try {
+                  const apiModule = (await import('../api')).default
+                  await apiModule.post('/ws/simulate-sale')
+                } catch (e) {
+                  console.error(e)
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+              title="Simulate a real-time sale transaction over WebSockets"
+            >
+              <span>⚡</span> Simulate Sale
+            </button>
             <div className="topbar-avatar">{initial}</div>
             <div className="topbar-user">
               <strong>{session.full_name || session.email}</strong>

@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+import io
+import csv
+from datetime import datetime
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, text
 from app.database import get_db
@@ -15,6 +19,11 @@ from app.schemas.transaction import (
     CustomerSegmentResponse,
     HistoricalValidationReport,
     ValidationCheck,
+    ChartDataset,
+    SalesTrendsChartResponse,
+    CategoryDistributionChartResponse,
+    VendorPerformanceChartResponse,
+    VendorBenchmarkingResponse,
 )
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -381,3 +390,283 @@ def validate_historical(
 
     overall = all(c.passed for c in checks)
     return HistoricalValidationReport(overall_passed=overall, checks=checks)
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: Frontend Chart Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/charts/sales-trends", response_model=SalesTrendsChartResponse)
+def chart_sales_trends(
+    vendor_id: Optional[int] = None,
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Format daily sales & revenue time-series data specifically for frontend charts."""
+    if current_user.role == "VENDOR":
+        if vendor_id and current_user.vendor_id != vendor_id:
+            raise HTTPException(status_code=403, detail="Vendors can only view their own analytics")
+        vendor_id = current_user.vendor_id
+
+    query = db.query(
+        func.date(Transaction.transaction_date).label("date"),
+        func.sum(Transaction.total_amount).label("revenue"),
+        func.count(Transaction.id).label("orders"),
+    ).filter(Transaction.payment_status == "COMPLETED")
+
+    if vendor_id:
+        query = query.filter(Transaction.vendor_id == vendor_id)
+
+    results = query.group_by(func.date(Transaction.transaction_date)).order_by(
+        func.date(Transaction.transaction_date)
+    ).limit(days).all()
+
+    labels = [str(r.date) for r in results]
+    revenue_data = [round(r.revenue or 0.0, 2) for r in results]
+    orders_data = [int(r.orders or 0) for r in results]
+
+    return SalesTrendsChartResponse(
+        labels=labels,
+        datasets=[
+            ChartDataset(label="Total Revenue (₹)", data=revenue_data),
+            ChartDataset(label="Orders Count", data=orders_data),
+        ],
+    )
+
+
+@router.get("/charts/category-distribution", response_model=CategoryDistributionChartResponse)
+def chart_category_distribution(
+    vendor_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Format category revenue breakdown for frontend pie/donut charts."""
+    if current_user.role == "VENDOR":
+        if vendor_id and current_user.vendor_id != vendor_id:
+            raise HTTPException(status_code=403, detail="Vendors can only view their own analytics")
+        vendor_id = current_user.vendor_id
+
+    query = db.query(
+        Product.category.label("category"),
+        func.sum(Transaction.total_amount).label("revenue"),
+    ).join(Transaction, Product.id == Transaction.product_id).filter(
+        Transaction.payment_status == "COMPLETED"
+    )
+
+    if vendor_id:
+        query = query.filter(Transaction.vendor_id == vendor_id)
+
+    results = query.group_by(Product.category).order_by(func.sum(Transaction.total_amount).desc()).all()
+
+    total_rev = sum(r.revenue or 0.0 for r in results) or 1.0
+    labels = [r.category or "Uncategorized" for r in results]
+    series = [round(r.revenue or 0.0, 2) for r in results]
+    percentages = [round(((r.revenue or 0.0) / total_rev) * 100, 1) for r in results]
+
+    return CategoryDistributionChartResponse(
+        labels=labels,
+        series=series,
+        percentages=percentages,
+    )
+
+
+@router.get("/charts/vendor-performance", response_model=VendorPerformanceChartResponse)
+def chart_vendor_performance(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN"])),
+):
+    """Format comparative top vendor performance for multi-bar charts."""
+    results = db.query(
+        Vendor.vendor_name.label("vendor_name"),
+        func.sum(Transaction.total_amount).label("revenue"),
+        func.count(Transaction.id).label("sales_count"),
+    ).join(Transaction, Vendor.id == Transaction.vendor_id).filter(
+        Transaction.payment_status == "COMPLETED"
+    ).group_by(Vendor.id, Vendor.vendor_name).order_by(
+        func.sum(Transaction.total_amount).desc()
+    ).limit(limit).all()
+
+    labels = [r.vendor_name for r in results]
+    revenue_data = [round(r.revenue or 0.0, 2) for r in results]
+    sales_data = [int(r.sales_count or 0) for r in results]
+
+    return VendorPerformanceChartResponse(
+        labels=labels,
+        revenue_dataset=revenue_data,
+        sales_dataset=sales_data,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: Vendor Benchmarking Metrics
+# ---------------------------------------------------------------------------
+
+@router.get("/vendors/{vendor_id}/benchmarking", response_model=VendorBenchmarkingResponse)
+def vendor_benchmarking(
+    vendor_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Compare a vendor's performance metrics against overall marketplace averages."""
+    if current_user.role == "VENDOR" and current_user.vendor_id != vendor_id:
+        raise HTTPException(status_code=403, detail="Vendors can only view their own benchmarking data")
+
+    vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
+    if not vendor:
+        raise HTTPException(status_code=404, detail="Vendor not found")
+
+    # Vendor specific metrics
+    v_stats = db.query(
+        func.sum(Transaction.total_amount).label("total_revenue"),
+        func.count(Transaction.id).label("sales_count"),
+        func.avg(Transaction.total_amount).label("avg_order_value"),
+    ).filter(
+        Transaction.vendor_id == vendor_id,
+        Transaction.payment_status == "COMPLETED"
+    ).first()
+
+    v_revenue = v_stats.total_revenue or 0.0
+    v_sales = v_stats.sales_count or 0
+    v_aov = v_stats.avg_order_value or 0.0
+    v_products = db.query(func.count(Product.id)).filter(Product.vendor_id == vendor_id).scalar() or 0
+
+    # Marketplace averages
+    total_vendors_count = db.query(func.count(Vendor.id)).scalar() or 1
+
+    m_stats = db.query(
+        func.sum(Transaction.total_amount).label("total_revenue"),
+        func.count(Transaction.id).label("total_sales"),
+        func.avg(Transaction.total_amount).label("avg_order_value"),
+    ).filter(Transaction.payment_status == "COMPLETED").first()
+
+    m_revenue_total = m_stats.total_revenue or 0.0
+    m_sales_total = m_stats.total_sales or 0
+    m_aov = m_stats.avg_order_value or 0.0
+    m_products_total = db.query(func.count(Product.id)).scalar() or 0
+
+    m_avg_revenue = m_revenue_total / total_vendors_count
+    m_avg_sales = m_sales_total / total_vendors_count
+    m_avg_products = m_products_total / total_vendors_count
+
+    ratio = round(v_revenue / m_avg_revenue, 2) if m_avg_revenue > 0 else 1.0
+
+    if ratio >= 1.15:
+        status_label = "Outperforming (Above Average)"
+    elif ratio >= 0.85:
+        status_label = "On Par (Marketplace Average)"
+    else:
+        status_label = "Underperforming (Below Average)"
+
+    return VendorBenchmarkingResponse(
+        vendor_id=vendor_id,
+        vendor_name=vendor.vendor_name,
+        vendor_revenue=round(v_revenue, 2),
+        marketplace_avg_revenue=round(m_avg_revenue, 2),
+        vendor_sales_count=v_sales,
+        marketplace_avg_sales_count=round(m_avg_sales, 1),
+        vendor_avg_order_value=round(v_aov, 2),
+        marketplace_avg_order_value=round(m_aov, 2),
+        vendor_product_count=v_products,
+        marketplace_avg_products_per_vendor=round(m_avg_products, 1),
+        revenue_performance_ratio=ratio,
+        performance_status=status_label,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: Data Export Functionality (CSV Reports)
+# ---------------------------------------------------------------------------
+
+@router.get("/export/sales-csv")
+def export_sales_csv(
+    vendor_id: Optional[int] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Export completed transactions history report as a CSV file."""
+    if current_user.role == "VENDOR":
+        if vendor_id and current_user.vendor_id != vendor_id:
+            raise HTTPException(status_code=403, detail="Vendors can only export their own sales data")
+        vendor_id = current_user.vendor_id
+
+    query = db.query(
+        Transaction.id,
+        Transaction.transaction_date,
+        Vendor.vendor_name,
+        Product.product_name,
+        Customer.first_name,
+        Customer.last_name,
+        Customer.email,
+        Transaction.quantity,
+        Transaction.unit_price,
+        Transaction.total_amount,
+        Transaction.sales_platform,
+        Transaction.payment_status,
+    ).join(Vendor, Transaction.vendor_id == Vendor.id)\
+     .join(Product, Transaction.product_id == Product.id)\
+     .join(Customer, Transaction.customer_id == Customer.id)\
+     .filter(Transaction.payment_status == "COMPLETED")
+
+    if vendor_id:
+        query = query.filter(Transaction.vendor_id == vendor_id)
+    if start_date:
+        query = query.filter(func.date(Transaction.transaction_date) >= start_date)
+    if end_date:
+        query = query.filter(func.date(Transaction.transaction_date) <= end_date)
+
+    rows = query.order_by(Transaction.transaction_date.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    # Write header
+    writer.writerow([
+        "Transaction ID",
+        "Date",
+        "Vendor",
+        "Product",
+        "Customer Name",
+        "Customer Email",
+        "Quantity",
+        "Unit Price (INR)",
+        "Total Amount (INR)",
+        "Sales Platform",
+        "Payment Status",
+    ])
+
+    for row in rows:
+        writer.writerow([
+            row.id,
+            row.transaction_date.strftime("%Y-%m-%d %H:%M:%S") if row.transaction_date else "",
+            row.vendor_name,
+            row.product_name,
+            f"{row.first_name} {row.last_name}",
+            row.email,
+            row.quantity,
+            row.unit_price,
+            row.total_amount,
+            row.sales_platform,
+            row.payment_status,
+        ])
+
+    csv_content = output.getvalue()
+    filename = f"sales_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/vendors/{vendor_id}/export/sales-csv")
+def export_vendor_sales_csv(
+    vendor_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """Shortcut vendor endpoint to export sales data as CSV."""
+    return export_sales_csv(vendor_id=vendor_id, db=db, current_user=current_user)
+

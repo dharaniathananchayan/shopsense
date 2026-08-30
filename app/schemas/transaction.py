@@ -83,3 +83,41 @@ class HistoricalValidationReport(BaseModel):
     """Overall report returned by the historical data validation endpoint."""
     overall_passed: bool
     checks: List[ValidationCheck]
+
+
+class ChartDataset(BaseModel):
+    label: str
+    data: List[float]
+
+
+class SalesTrendsChartResponse(BaseModel):
+    labels: List[str]
+    datasets: List[ChartDataset]
+
+
+class CategoryDistributionChartResponse(BaseModel):
+    labels: List[str]
+    series: List[float]
+    percentages: List[float]
+
+
+class VendorPerformanceChartResponse(BaseModel):
+    labels: List[str]
+    revenue_dataset: List[float]
+    sales_dataset: List[int]
+
+
+class VendorBenchmarkingResponse(BaseModel):
+    vendor_id: int
+    vendor_name: str
+    vendor_revenue: float
+    marketplace_avg_revenue: float
+    vendor_sales_count: int
+    marketplace_avg_sales_count: float
+    vendor_avg_order_value: float
+    marketplace_avg_order_value: float
+    vendor_product_count: int
+    marketplace_avg_products_per_vendor: float
+    revenue_performance_ratio: float
+    performance_status: str
+
