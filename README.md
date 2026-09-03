@@ -73,6 +73,13 @@ ShopSense is an AI-powered multi-vendor e-commerce analytics and marketplace man
   - **Vendor Benchmarking Metrics**: Performance comparison endpoint (`/api/v1/analytics/vendors/{id}/benchmarking`) rating vendor revenue, order volume, AOV, and catalog size against marketplace means with performance ratio badging (*Outperforming*, *On Par*, *Underperforming*).
   - **CSV Data Export**: Streaming CSV generation (`/api/v1/analytics/export/sales-csv`, `/api/v1/analytics/vendors/{id}/export/sales-csv`) for instant one-click transaction report downloads (`text/csv`).
 
+- ✅ **Advanced / Optional Features**:
+  - **Real-Time Dashboards (WebSockets)**: Asynchronous FastAPI WebSocket subscription engine (`WS /api/v1/ws/sales`) and broadcast triggers (`POST /api/v1/ws/simulate-sale`) pushing live sales event notifications to React dashboard toasts without polling.
+  - **RAG-Powered AI Shopping Assistant**: Natural language catalog chatbot API (`/api/v1/ai/shopping-assistant`) using SQLite retrieval and Groq/LLM generation to answer customer queries with recommendations grounded strictly in catalog inventory via a floating frontend drawer (`ShoppingAssistant.jsx`).
+  - **AI Data Analyst (Text-to-SQL)**: Conversational BI query engine (`/api/v1/ai/data-analyst`) converting natural language seller questions into safe SQLite `SELECT` queries, executing them, and synthesizing executive business insights with clean formatted typography (`AIDataAnalyst.jsx`).
+
+---
+
 ### 🚩 Milestone 4: Optimization, Testing & Deployment (Weeks 7–8)
 **Objective:** Ensure the platform is production-ready, performant, containerized, and well-tested with automated CI/CD and AI Agent workflows.
 
