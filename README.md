@@ -73,10 +73,18 @@ ShopSense is an AI-powered multi-vendor e-commerce analytics and marketplace man
   - **Vendor Benchmarking Metrics**: Performance comparison endpoint (`/api/v1/analytics/vendors/{id}/benchmarking`) rating vendor revenue, order volume, AOV, and catalog size against marketplace means with performance ratio badging (*Outperforming*, *On Par*, *Underperforming*).
   - **CSV Data Export**: Streaming CSV generation (`/api/v1/analytics/export/sales-csv`, `/api/v1/analytics/vendors/{id}/export/sales-csv`) for instant one-click transaction report downloads (`text/csv`).
 
+### 🚩 Milestone 4: Optimization, Testing & Deployment (Weeks 7–8)
+**Objective:** Ensure the platform is production-ready, performant, containerized, and well-tested with automated CI/CD and AI Agent workflows.
+
+- ✅ **Base Requirements**:
+  - **Docker Application Packaging**: Multi-stage [`Dockerfile`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/Dockerfile) building React 19 frontend assets and bundling FastAPI production server alongside [`docker-compose.yml`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/docker-compose.yml) container orchestration.
+  - **Comprehensive OpenAPI Documentation**: Enhanced FastAPI endpoint summaries, tags, and Pydantic schemas automatically published to Interactive Swagger UI (`/docs`).
+  - **Pytest Automated Test Suite**: Comprehensive unit test suite in [`tests/test_main.py`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/tests/test_main.py) verifying core REST APIs (Auth JWT, Products, Chart Analytics, Vendor Benchmarking, RAG Shopping Assistant, Text-to-SQL Analyst, and AI Agent Workflows).
+
 - ✅ **Advanced / Optional Features**:
-  - **Real-Time Dashboards (WebSockets)**: Asynchronous FastAPI WebSocket subscription engine (`WS /api/v1/ws/sales`) and broadcast triggers (`POST /api/v1/ws/simulate-sale`) pushing live sales event notifications to React dashboard toasts without polling.
-  - **RAG-Powered AI Shopping Assistant**: Natural language catalog chatbot API (`/api/v1/ai/shopping-assistant`) using SQLite retrieval and Groq/LLM generation to answer customer queries with recommendations grounded strictly in catalog inventory via a floating frontend drawer (`ShoppingAssistant.jsx`).
-  - **AI Data Analyst (Text-to-SQL)**: Conversational BI query engine (`/api/v1/ai/data-analyst`) converting natural language seller questions into safe SQLite `SELECT` queries, executing them, and synthesizing executive business insights with clean formatted typography (`AIDataAnalyst.jsx`).
+  - **CI/CD Pipelines (GitHub Actions)**: Automated workflow ([`.github/workflows/ci.yml`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/.github/workflows/ci.yml)) executing Python test suites, database seeding, and React production builds on every code push.
+  - **Autonomous AI Agent Workflow**: Autonomous store diagnostic service ([`agent_workflow_service.py`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/app/services/agent_workflow_service.py) & `POST /api/v1/ai/agent-workflow/run`) auditing vendor inventory velocity and generating proactive markdown pricing advisories and stockout warnings in a clean React component ([`AIAgentWorkflow.jsx`](file:///c:/Users/DHARANIA/OneDrive/Desktop/shop-sense/frontend/src/components/AIAgentWorkflow.jsx)).
+  - **Containerized Cloud Deployment Configs**: Production Docker & environment configurations for seamless deployment to cloud providers (AWS EC2, Render, Heroku).
 
 ---
 
@@ -120,12 +128,21 @@ npm run dev
 ```
 Vite frontend dev server will launch at [http://localhost:5173](http://localhost:5173).
 
+### 3. Running with Docker
+```bash
+# Build and run containerized application via Docker Compose
+docker-compose up --build
+```
+
 ---
 
 ## 📂 Project Structure
 
 ```text
 shop-sense/
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions CI/CD pipeline
 ├── app/
 │   ├── main.py                  # FastAPI entry point & route registration
 │   ├── database.py              # SQLAlchemy engine & SQLite migration setup
@@ -133,7 +150,7 @@ shop-sense/
 │   ├── models/                  # Database models (User, Vendor, Product, Customer, Transaction, Review)
 │   ├── schemas/                 # Pydantic validation schemas
 │   ├── crud/                    # Database query abstraction layer
-│   ├── routers/                 # API Endpoints (auth, products, recommendations, forecasting, sentiment, websocket, etc.)
+│   ├── routers/                 # API Endpoints (auth, products, vendors, recommendations, forecasting, sentiment, websocket, etc.)
 │   └── services/                # AI, ML & Vector engines
 │       ├── ai_service.py        # Groq GenAI SEO listing generator
 │       ├── forecasting_service.py # ARIMA & Holt Exponential Smoothing forecasting
@@ -141,12 +158,17 @@ shop-sense/
 │       ├── vector_service.py    # TF-IDF Cosine Vector DB & KNN Search
 │       ├── ws_manager.py        # WebSocket ConnectionManager real-time sales stream
 │       ├── rag_service.py       # Catalog RAG Shopping Assistant retriever & prompt engine
-│       └── sql_analyst_service.py # Text-to-SQL query generator & business analyst
+│       ├── sql_analyst_service.py # Text-to-SQL query generator & business analyst
+│       └── agent_workflow_service.py # Autonomous AI Agent store diagnostic advisor
 ├── frontend/                    # React 19 + Vite dashboard application
 │   ├── src/
-│   │   ├── pages/               # Dashboard pages (Overview, Analytics, Inventory, Forecasting, Recommendations, etc.)
-│   │   ├── components/          # Topbar, Sidebar, AIDataAnalyst, ShoppingAssistant components
+│   │   ├── pages/               # Dashboard pages (Overview, Analytics, Inventory, Forecasting, Vendors, Products, Studio, etc.)
+│   │   ├── components/          # Topbar, Sidebar, AIDataAnalyst, ShoppingAssistant, AIAgentWorkflow components
 │   │   └── index.css            # Responsive layout & design system
+├── tests/                       # Pytest unit test suite
+│   └── test_main.py
+├── Dockerfile                   # Multi-stage Docker production build
+├── docker-compose.yml           # Local & cloud container orchestration
 ├── requirements.txt             # Python dependencies
 └── README.md                    # Project documentation
 ```

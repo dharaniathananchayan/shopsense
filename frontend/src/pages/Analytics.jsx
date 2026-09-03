@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import api from '../api'
 import AIDataAnalyst from '../components/AIDataAnalyst'
+import ChartAnalytics from '../components/ChartAnalytics'
+import AIAgentWorkflow from '../components/AIAgentWorkflow'
 
 const fmt = (n) => Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -85,8 +87,16 @@ export default function Analytics() {
 
       {error && <div className="alert alert-error" style={{ marginBottom: 20 }}>{error}</div>}
 
+      {/* Feature 1: Interactive Chart Analytics Component */}
+      <ChartAnalytics />
+
       {/* AI Data Analyst Section */}
       <AIDataAnalyst />
+
+      {/* Autonomous AI Agent Workflow Audit Component */}
+      <AIAgentWorkflow />
+
+
 
       {/* Platform summary */}
       <div className="card" style={{ marginBottom: 20 }}>

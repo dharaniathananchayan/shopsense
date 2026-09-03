@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -6,14 +7,16 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const isAdmin  = session?.role === 'ADMIN'
   const isVendor = session?.role === 'VENDOR'
+  const [catalogOpen, setCatalogOpen] = useState(true)
 
   const handleLogout = () => { logout(); navigate('/') }
 
-  const link = (to, icon, label, end = false, badge = null) => (
+  const link = (to, icon, label, end = false, badge = null, isSub = false) => (
     <NavLink
       to={to}
       end={end}
       className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+      style={isSub ? { paddingLeft: 32, fontSize: 13 } : {}}
     >
       <span className="sidebar-icon">{icon}</span>
       <span>{label}</span>
@@ -42,7 +45,30 @@ export default function Sidebar() {
       <div className="sidebar-divider" />
       <p className="sidebar-section-label">Catalog & AI</p>
       <nav className="sidebar-nav">
-        {(isAdmin || isVendor) && link('/products', '□', 'Products')}
+        {/* Catalog Accordion Menu */}
+        {(isAdmin || isVendor) && (
+          <div>
+            <div
+              className="sidebar-link"
+              onClick={() => setCatalogOpen(!catalogOpen)}
+              style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="sidebar-icon">📑</span>
+                <span style={{ fontWeight: 600 }}>Catalog</span>
+              </div>
+              <span style={{ fontSize: 11, opacity: 0.7 }}>{catalogOpen ? '▼' : '▶'}</span>
+            </div>
+
+            {catalogOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, marginBottom: 4 }}>
+                {link('/products', '📦', 'Product List', false, null, true)}
+                {link('/vendors', '🏢', 'Vendor List', false, null, true)}
+              </div>
+            )}
+          </div>
+        )}
+
         {link('/sentiment', '💬', 'Sentiment AI')}
         {(isAdmin || isVendor) && link('/studio', '✧', 'AI Studio')}
         {isAdmin && link('/approvals', '⊙', 'Vendor Approvals')}
@@ -65,3 +91,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+

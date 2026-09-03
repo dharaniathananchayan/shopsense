@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  shopsense-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopsense_app
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_TITLE=ShopSense Multi-Vendor Analytics & Intelligence Platform
+      - APP_VERSION=1.0.0
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-super-secret-production-key}
+    volumes:
+      - ./shopsense.db:/app/shopsense.db
+    restart: unless-stopped

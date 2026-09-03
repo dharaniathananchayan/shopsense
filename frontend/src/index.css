@@ -170,6 +170,11 @@ ul, ol { list-style: none; }
   flex-direction: column;
 }
 
+.layout.no-sidebar .main-content {
+  margin-left: 0;
+  width: 100%;
+}
+
 /* --- Topbar -------------------------------------------------------- */
 .topbar {
   position: sticky;

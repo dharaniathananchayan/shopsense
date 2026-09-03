@@ -50,3 +50,17 @@ class DataAnalystResponse(BaseModel):
     analysis_insight: str
     ai_provider: str
 
+
+class AgentWorkflowRequest(BaseModel):
+    vendor_id: int = Field(..., gt=0)
+
+
+class AgentWorkflowResponse(BaseModel):
+    vendor_id: int
+    vendor_name: str
+    timestamp: str
+    audit_data: List[dict]
+    advisory_report: str
+    ai_agent_status: str
+
+

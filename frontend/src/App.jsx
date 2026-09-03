@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
@@ -11,6 +11,7 @@ import Segments        from './pages/Segments'
 import Recommendations from './pages/Recommendations'
 import Validation      from './pages/Validation'
 import Products        from './pages/Products'
+import Vendors         from './pages/Vendors'
 import Studio          from './pages/Studio'
 import Sentiment       from './pages/Sentiment'
 import Auth            from './pages/Auth'
@@ -25,7 +26,11 @@ function RequireRole({ roles, children }) {
 }
 
 function AppShell() {
+  const { session } = useAuth()
+  const location = useLocation()
   const [saleNotification, setSaleNotification] = useState(null)
+
+  const showSidebar = Boolean(session?.access_token) && location.pathname !== '/auth'
 
   useEffect(() => {
     // Establish WebSocket connection for real-time sales stream
@@ -56,7 +61,7 @@ function AppShell() {
   }, [])
 
   return (
-    <div className="layout">
+    <div className={`layout ${!showSidebar ? 'no-sidebar' : ''}`}>
       {/* Real-time WebSocket Sales Toast Notification */}
       {saleNotification && (
         <div
@@ -98,7 +103,7 @@ function AppShell() {
         </div>
       )}
 
-      <Sidebar />
+      {showSidebar && <Sidebar />}
       <div className="main-content">
         <Topbar />
         <Routes>
@@ -112,6 +117,7 @@ function AppShell() {
           <Route path="/segments"       element={<RequireRole roles={['ADMIN']}><Segments /></RequireRole>} />
           <Route path="/validation"     element={<RequireRole roles={['ADMIN']}><Validation /></RequireRole>} />
           <Route path="/products"       element={<RequireRole roles={['ADMIN','VENDOR']}><Products /></RequireRole>} />
+          <Route path="/vendors"        element={<RequireRole roles={['ADMIN','VENDOR']}><Vendors /></RequireRole>} />
           <Route path="/studio"         element={<RequireRole roles={['ADMIN','VENDOR']}><Studio /></RequireRole>} />
           <Route path="/approvals"      element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
           <Route path="*"               element={<Navigate to="/" replace />} />

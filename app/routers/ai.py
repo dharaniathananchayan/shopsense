@@ -9,17 +9,20 @@ from app.schemas.ai import (
     ShoppingAssistantResponse,
     DataAnalystRequest,
     DataAnalystResponse,
+    AgentWorkflowRequest,
+    AgentWorkflowResponse,
 )
 from app.schemas.product import ProductResponse
 from app.services.ai_service import generate_ai_product_content
 from app.services.rag_service import run_rag_shopping_assistant
 from app.services.sql_analyst_service import run_ai_data_analyst
+from app.services.agent_workflow_service import run_autonomous_vendor_agent
 from app.crud.product import create_product
 from app.schemas.product import ProductCreate
 from app.crud.auth import get_current_user, require_role
 from app.models.user import User
 
-router = APIRouter(prefix="/ai", tags=["AI & BI Features (GenAI, RAG, Text-to-SQL)"])
+router = APIRouter(prefix="/ai", tags=["AI & BI Features (GenAI, RAG, Text-to-SQL, AI Agents)"])
 
 @router.post("/generate-description", response_model=AIGenerateResponse)
 def generate_description(request: AIGenerateRequest):
@@ -116,4 +119,26 @@ def ai_data_analyst(
         question=request.question,
         vendor_id=vendor_id
     )
+
+
+@router.post("/agent-workflow/run", response_model=AgentWorkflowResponse)
+def run_agent_workflow(
+    request: AgentWorkflowRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["ADMIN", "VENDOR"])),
+):
+    """
+    Autonomous AI Agent Workflow:
+    Runs proactive weekly catalog diagnostics on a vendor's store and generates strategic advice 
+    (e.g., discounting slow-moving inventory, stockout warnings).
+    """
+    vendor_id = request.vendor_id
+    if current_user.role == "VENDOR":
+        vendor_id = current_user.vendor_id
+
+    try:
+        return run_autonomous_vendor_agent(db=db, vendor_id=vendor_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
