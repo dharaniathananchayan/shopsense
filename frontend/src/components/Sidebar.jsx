@@ -63,7 +63,7 @@ export default function Sidebar() {
             {catalogOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, marginBottom: 4 }}>
                 {link('/products', '📦', 'Product List', false, null, true)}
-                {link('/vendors', '🏢', 'Vendor List', false, null, true)}
+                {isAdmin && link('/vendors', '🏢', 'Vendor List', false, null, true)}
               </div>
             )}
           </div>

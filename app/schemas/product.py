@@ -17,6 +17,8 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = Field(None, gt=0)
     stock_quantity: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
+    image_url: Optional[str] = None
+    tags: Optional[str] = None
 
 class ProductApprovalUpdate(BaseModel):
     approval_status: str = Field(..., pattern="^(APPROVED|REJECTED)$")
@@ -36,6 +38,8 @@ class ProductResponse(BaseModel):
     approved_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    image_url: Optional[str] = None
+    tags: Optional[str] = None
 
     class Config:
         from_attributes = True

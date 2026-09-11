@@ -64,6 +64,18 @@ def authenticate_user(db: Session, login_data: UserLogin) -> dict:
         "vendor_id": user.vendor_id
     }
 
+def get_optional_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User | None:
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if not payload:
+        return None
+    try:
+        user_id = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        return None
+    return db.query(User).filter(User.id == user_id).first()
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     if not token:
         raise HTTPException(

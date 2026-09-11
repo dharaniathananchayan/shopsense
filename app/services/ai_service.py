@@ -142,3 +142,73 @@ def generate_ai_product_content(
         "seo_score": random.randint(88, 94),
         "ai_provider": "ShopSense local fallback (Groq not configured)",
     }
+def analyze_product_image(image_bytes: bytes) -> Dict[str, Any]:
+    """Analyze a product image to determine its category and tags."""
+    # In a real scenario, you'd pass the image to a Vision model API
+    # like Groq Vision, OpenAI GPT-4o, or Gemini.
+    # Here is a mock implementation for demonstration.
+    import base64
+    import random
+    
+    # Check if we have GROQ_API_KEY to potentially use a vision model
+    if GROQ_API_KEY:
+        try:
+            import httpx
+            # Prepare base64 image
+            b64_image = base64.b64encode(image_bytes).decode('utf-8')
+            prompt = "Analyze this product image. Return a JSON object with exactly these keys: category (string), tags (comma separated string of 3-5 tags describing the product)."
+            
+            response = httpx.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                json={
+                    "model": "llama-3.2-11b-vision-preview",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{b64_image}"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "temperature": 0.5,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=20.0,
+            )
+            response.raise_for_status()
+            raw = response.json()["choices"][0]["message"]["content"]
+            clean_json = raw.strip()
+            if clean_json.startswith("```json"):
+                clean_json = clean_json[7:]
+            if clean_json.startswith("```"):
+                clean_json = clean_json[3:]
+            if clean_json.endswith("```"):
+                clean_json = clean_json[:-3]
+            parsed = json.loads(clean_json.strip())
+            return {
+                "category": parsed.get("category", "General"),
+
+                "tags": parsed.get("tags", "")
+            }
+        except Exception as exc:
+            logger.warning("Vision API failed (%s); using the local fallback.", exc)
+
+    # Local fallback
+    categories = ["Footwear", "Apparel", "Electronics", "Home & Garden", "Sports"]
+    tags_list = ["shoes", "sneakers", "comfortable", "stylish", "footwear", "trending"]
+    
+    # We default to Footwear for demo purposes since Vision API might be missing
+    selected_category = "Footwear" 
+    selected_tags = "shoes, comfortable, sneakers"
+    
+    return {
+        "category": selected_category,
+        "tags": selected_tags
+    }

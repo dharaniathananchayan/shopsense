@@ -20,6 +20,8 @@ export default function Studio() {
   const [generated, setGenerated] = useState(null)
   const [notice, setNotice] = useState(null)
 
+  const [imageFile, setImageFile] = useState(null)
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -30,16 +32,36 @@ export default function Studio() {
     setNotice(null)
     setGenerating(true)
     try {
-      const payload = {
-        product_name: formData.product_name,
-        category: formData.category,
-        keywords: formData.keywords,
-        target_audience: formData.target_audience,
-        price: parseFloat(formData.price),
-        stock_quantity: parseInt(formData.stock_quantity, 10),
-        vendor_id: parseInt(session?.role === 'VENDOR' ? session.vendor_id : formData.vendor_id, 10),
+      let response;
+      if (imageFile) {
+        const formDataPayload = new FormData()
+        formDataPayload.append('product_name', formData.product_name)
+        formDataPayload.append('category', formData.category)
+        formDataPayload.append('keywords', formData.keywords)
+        formDataPayload.append('target_audience', formData.target_audience)
+        formDataPayload.append('file', imageFile)
+        
+        response = await api.post('/ai/generate-description-with-image', formDataPayload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        
+        // Update category state if AI generated one
+        if (response.data.category) {
+            setFormData(prev => ({ ...prev, category: response.data.category }))
+        }
+      } else {
+        const payload = {
+          product_name: formData.product_name,
+          category: formData.category,
+          keywords: formData.keywords,
+          target_audience: formData.target_audience,
+          price: parseFloat(formData.price),
+          stock_quantity: parseInt(formData.stock_quantity, 10),
+          vendor_id: parseInt(session?.role === 'VENDOR' ? session.vendor_id : formData.vendor_id, 10),
+        }
+        response = await api.post('/ai/generate-description', payload)
       }
-      const response = await api.post('/ai/generate-description', payload)
+      
       setGenerated(response.data)
       setNotice({ type: 'success', message: 'Description generated! Review below and publish when ready.' })
     } catch (err) {
@@ -66,9 +88,19 @@ export default function Studio() {
         stock_quantity: parseInt(formData.stock_quantity, 10),
         vendor_id: parseInt(session?.role === 'VENDOR' ? session.vendor_id : formData.vendor_id, 10),
       }
-      await api.post('/ai/create-product-with-ai', payload)
+      const response = await api.post('/ai/create-product-with-ai', payload)
+      
+      if (imageFile) {
+        const uploadData = new FormData()
+        uploadData.append('file', imageFile)
+        await api.post(`/products/${response.data.id}/image`, uploadData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      }
+
       setNotice({ type: 'success', message: 'Product successfully created and published to the catalog!' })
       setGenerated(null)
+      setImageFile(null)
       setFormData({
         product_name: '',
         category: '',
@@ -159,6 +191,16 @@ export default function Studio() {
                 value={formData.target_audience}
                 onChange={handleChange}
               />
+            </div>
+
+            <div className="field">
+              <label>Product Image (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files[0])}
+              />
+              <span className="field-help" style={{ fontSize: '12px', color: 'var(--muted)' }}>Upload an image to automatically tag and categorize the product!</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

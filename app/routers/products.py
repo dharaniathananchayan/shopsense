@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.product import (
@@ -6,8 +6,9 @@ from app.schemas.product import (
     StockLevelResponse, LowStockAlertResponse,
 )
 from app.crud import product as crud_product
-from app.crud.auth import get_current_user, require_role
+from app.crud.auth import get_current_user, require_role, get_optional_current_user
 from app.models.user import User
+from app.services.ai_service import analyze_product_image
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -18,8 +19,10 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), curren
     return crud_product.create_product(db=db, product=product, approval_status="APPROVED")
 
 @router.get("/", response_model=list[ProductResponse])
-def read_products(skip: int = 0, limit: int = 100, vendor_id: int = None, category: str = None, db: Session = Depends(get_db)):
-    """Public catalog feed used by the unauthenticated forecasting page."""
+def read_products(skip: int = 0, limit: int = 100, vendor_id: int = None, category: str = None, db: Session = Depends(get_db), current_user: User = Depends(get_optional_current_user)):
+    """Public catalog feed. Scoped to vendor if user is a VENDOR."""
+    if current_user and current_user.role == "VENDOR":
+        vendor_id = current_user.vendor_id
     return crud_product.get_products(db=db, skip=skip, limit=limit, vendor_id=vendor_id, category=category)
 
 
@@ -106,3 +109,44 @@ def delete_product(product_id: int, db: Session = Depends(get_db), current_user:
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Product deleted successfully"}
+
+@router.post("/{product_id}/image", response_model=ProductResponse)
+async def upload_product_image(
+    product_id: int, 
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(require_role(["VENDOR", "ADMIN"]))
+):
+    """Upload a product image and automatically categorize/tag it using a Vision model API."""
+    db_product = crud_product.get_product(db=db, product_id=product_id)
+    if db_product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+        
+    if current_user.role == "VENDOR" and db_product.vendor_id != current_user.vendor_id:
+        raise HTTPException(status_code=403, detail="Vendors can only update their own products")
+
+
+        
+    image_bytes = await file.read()
+    
+    # Analyze the image using the vision model
+    analysis = analyze_product_image(image_bytes)
+    
+    # Save the file to a local directory
+    import os
+    os.makedirs("app/static/images", exist_ok=True)
+    
+    file_path = f"app/static/images/{product_id}_{file.filename}"
+    with open(file_path, "wb") as f:
+        f.write(image_bytes)
+        
+    file_location = f"/static/images/{product_id}_{file.filename}"
+    
+    update_data = ProductUpdate(
+        category=analysis.get("category"),
+        tags=analysis.get("tags"),
+        image_url=file_location
+    )
+    
+    db_product = crud_product.update_product(db=db, product_id=product_id, product_update=update_data)
+    return db_product

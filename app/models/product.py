@@ -19,6 +19,8 @@ class Product(Base):
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    image_url = Column(String(255), nullable=True)
+    tags = Column(Text, nullable=True)
 
     vendor = relationship("Vendor", back_populates="products")
     transactions = relationship("Transaction", back_populates="product")

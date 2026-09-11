@@ -39,8 +39,13 @@ async def create_transaction(transaction: TransactionCreate, db: Session = Depen
 
     return new_tx
 
+from app.crud.auth import get_optional_current_user
+from app.models.user import User
+
 @router.get("/", response_model=list[TransactionResponse])
-def read_transactions(skip: int = 0, limit: int = 100, vendor_id: int = None, customer_id: int = None, db: Session = Depends(get_db)):
+def read_transactions(skip: int = 0, limit: int = 100, vendor_id: int = None, customer_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_optional_current_user)):
+    if current_user and current_user.role == "VENDOR":
+        vendor_id = current_user.vendor_id
     return crud_transaction.get_transactions(db=db, skip=skip, limit=limit, vendor_id=vendor_id, customer_id=customer_id)
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)

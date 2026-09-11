@@ -25,12 +25,19 @@ function RequireRole({ roles, children }) {
   return children
 }
 
+function RequireAuth({ children }) {
+  const { session, loading } = useAuth()
+  if (loading) return <div className="page"><p style={{color:'var(--muted)'}}>Loading…</p></div>
+  if (!session?.access_token) return <Navigate to="/auth" replace />
+  return children
+}
+
 function AppShell() {
   const { session } = useAuth()
   const location = useLocation()
   const [saleNotification, setSaleNotification] = useState(null)
 
-  const showSidebar = Boolean(session?.access_token) && location.pathname !== '/auth'
+  const showSidebar = location.pathname !== '/auth'
 
   useEffect(() => {
     // Establish WebSocket connection for real-time sales stream
@@ -107,9 +114,9 @@ function AppShell() {
       <div className="main-content">
         <Topbar />
         <Routes>
-          <Route path="/"               element={<Overview />} />
+          <Route path="/"               element={<RequireAuth><Overview /></RequireAuth>} />
           <Route path="/auth"           element={<Auth />} />
-          <Route path="/recommendations" element={<Recommendations />} />
+          <Route path="/recommendations" element={<RequireAuth><Recommendations /></RequireAuth>} />
           <Route path="/sentiment"      element={<Sentiment />} />
           <Route path="/forecasting"    element={<Forecasting />} />
           <Route path="/analytics"      element={<RequireRole roles={['ADMIN']}><Analytics /></RequireRole>} />
@@ -117,7 +124,7 @@ function AppShell() {
           <Route path="/segments"       element={<RequireRole roles={['ADMIN']}><Segments /></RequireRole>} />
           <Route path="/validation"     element={<RequireRole roles={['ADMIN']}><Validation /></RequireRole>} />
           <Route path="/products"       element={<RequireRole roles={['ADMIN','VENDOR']}><Products /></RequireRole>} />
-          <Route path="/vendors"        element={<RequireRole roles={['ADMIN','VENDOR']}><Vendors /></RequireRole>} />
+          <Route path="/vendors"        element={<RequireRole roles={['ADMIN']}><Vendors /></RequireRole>} />
           <Route path="/studio"         element={<RequireRole roles={['ADMIN','VENDOR']}><Studio /></RequireRole>} />
           <Route path="/approvals"      element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
           <Route path="*"               element={<Navigate to="/" replace />} />
@@ -125,7 +132,7 @@ function AppShell() {
       </div>
 
       {/* Floating RAG AI Shopping Assistant */}
-      <ShoppingAssistant />
+      {location.pathname !== '/auth' && <ShoppingAssistant />}
     </div>
   )
 }

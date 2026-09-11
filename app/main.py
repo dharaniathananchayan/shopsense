@@ -63,6 +63,11 @@ frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if (frontend_dist / "assets").exists():
     app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
 
+# Serve product images
+import os
+os.makedirs("app/static/images", exist_ok=True)
+app.mount("/static/images", StaticFiles(directory="app/static/images"), name="images")
+
 @app.get("/", tags=["Root"])
 def root():
     return {"message": "Welcome to ShopSense API", "docs": "/docs", "version": APP_VERSION, "dashboard": "/dashboard"}

@@ -142,3 +142,35 @@ def run_agent_workflow(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+from fastapi import UploadFile, File, Form
+from typing import Optional
+from app.services.ai_service import analyze_product_image
+
+@router.post("/generate-description-with-image")
+async def generate_description_with_image(
+    product_name: str = Form(...),
+    category: Optional[str] = Form(None),
+    keywords: Optional[str] = Form(None),
+    target_audience: Optional[str] = Form("General customers"),
+    file: UploadFile = File(...)
+):
+    # Analyze image
+    image_bytes = await file.read()
+    image_analysis = analyze_product_image(image_bytes)
+    
+    # Use image category if not provided
+    final_category = category or image_analysis.get("category", "General")
+    # Append image tags to keywords
+    image_tags = image_analysis.get("tags", "")
+    final_keywords = f"{keywords}, {image_tags}" if keywords else image_tags
+    
+    # Generate description
+    result = generate_ai_product_content(
+        product_name=product_name,
+        category=final_category,
+        keywords=final_keywords,
+        target_audience=target_audience
+    )
+    
+    result["category"] = final_category
+    return result

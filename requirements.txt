@@ -13,3 +13,4 @@ numpy>=1.26.0
 statsmodels>=0.14.0
 pytest>=8.0.0
 
+python-multipart>=0.0.9

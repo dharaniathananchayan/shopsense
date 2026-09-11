@@ -15,6 +15,7 @@ class AIGenerateResponse(BaseModel):
     target_keywords: List[str]
     seo_score: int
     ai_provider: str
+    category: Optional[str] = None
 
 class ProductWithAICreate(BaseModel):
     vendor_id: int = Field(..., gt=0)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Auth() {
@@ -68,16 +68,38 @@ export default function Auth() {
   }
 
   return (
-    <div className="page">
-      <div className="auth-wall">
-        <h2>Welcome to ShopSense</h2>
-        <p className="card-sub">
-          {tab === 'login'
-            ? 'Sign in to access your dashboard, catalog, and analytics.'
-            : 'Create an account to manage your listings.'}
-        </p>
+    <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+      <div style={{ display: 'flex', maxWidth: '1000px', width: '100%', gap: '60px', alignItems: 'center', flexWrap: 'wrap-reverse' }}>
+        
+        <div style={{ flex: '1 1 300px' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--ink)', marginBottom: '16px', lineHeight: 1.2 }}>
+            ShopSense
+          </h1>
+          <p style={{ fontSize: '1.1rem', color: 'var(--muted)', lineHeight: 1.7, marginBottom: '24px' }}>
+            ShopSense is an intelligent, AI-driven e-commerce management platform designed to streamline your operations. 
+            Gain deep insights into your sales, forecast demand with precision, and understand customer sentiment to elevate your business.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+             <span className="badge badge-violet">AI-Driven</span>
+             <span className="badge badge-green">Real-Time Analytics</span>
+             <span className="badge badge-blue">Smart Forecasting</span>
+          </div>
 
-        <div className="tabs">
+
+        </div>
+
+        <div style={{ flex: '1 1 400px' }}>
+          <div className="auth-wall" style={{ margin: '0 auto', width: '100%', maxWidth: '440px' }}>
+            <h2 style={{ marginBottom: '8px' }}>
+              {tab === 'login' ? 'Welcome Back' : 'Get Started'}
+            </h2>
+            <p className="card-sub" style={{ marginBottom: '24px' }}>
+              {tab === 'login'
+                ? 'Please sign in to your account to continue.'
+                : 'Create a new account to get started.'}
+            </p>
+
+            <div className="tabs">
           <button
             className={`tab-btn ${tab === 'login' ? 'active' : ''}`}
             onClick={() => {
@@ -199,6 +221,8 @@ export default function Auth() {
             </button>
           </form>
         )}
+          </div>
+        </div>
       </div>
     </div>
   )
