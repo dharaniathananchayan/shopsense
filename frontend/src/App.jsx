@@ -12,10 +12,12 @@ import Recommendations from './pages/Recommendations'
 import Validation      from './pages/Validation'
 import Products        from './pages/Products'
 import Vendors         from './pages/Vendors'
+import Customers       from './pages/Customers'
 import Studio          from './pages/Studio'
 import Sentiment       from './pages/Sentiment'
 import Auth            from './pages/Auth'
 import Approvals       from './pages/Approvals'
+import Analyst         from './pages/Analyst'
 import ShoppingAssistant from './components/ShoppingAssistant'
 
 function RequireRole({ roles, children }) {
@@ -122,10 +124,12 @@ function AppShell() {
           <Route path="/analytics"      element={<RequireRole roles={['ADMIN']}><Analytics /></RequireRole>} />
           <Route path="/inventory"      element={<RequireRole roles={['ADMIN','VENDOR']}><Inventory /></RequireRole>} />
           <Route path="/segments"       element={<RequireRole roles={['ADMIN']}><Segments /></RequireRole>} />
-          <Route path="/validation"     element={<RequireRole roles={['ADMIN']}><Validation /></RequireRole>} />
+          <Route path="/diagnostics"    element={<RequireRole roles={['ADMIN']}><Validation /></RequireRole>} />
           <Route path="/products"       element={<RequireRole roles={['ADMIN','VENDOR']}><Products /></RequireRole>} />
           <Route path="/vendors"        element={<RequireRole roles={['ADMIN']}><Vendors /></RequireRole>} />
+          <Route path="/customers"      element={<RequireRole roles={['ADMIN']}><Customers /></RequireRole>} />
           <Route path="/studio"         element={<RequireRole roles={['ADMIN','VENDOR']}><Studio /></RequireRole>} />
+          <Route path="/analyst"        element={<RequireRole roles={['ADMIN','VENDOR']}><Analyst /></RequireRole>} />
           <Route path="/approvals"      element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
           <Route path="*"               element={<Navigate to="/" replace />} />
         </Routes>

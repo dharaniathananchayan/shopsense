@@ -50,6 +50,7 @@ class DataAnalystResponse(BaseModel):
     query_results: List[dict]
     analysis_insight: str
     ai_provider: str
+    chart_type: Optional[str] = None
 
 
 class AgentWorkflowRequest(BaseModel):

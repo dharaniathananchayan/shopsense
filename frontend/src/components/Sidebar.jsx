@@ -38,8 +38,8 @@ export default function Sidebar() {
         {link('/forecasting', '📈', 'ML Forecasting')}
         {(isAdmin || isVendor) && link('/inventory', '▤', 'Inventory')}
         {isAdmin && link('/segments', '◈', 'Segments')}
-        {link('/recommendations', '✦', 'Recommendations')}
-        {isAdmin && link('/validation', '✓', 'Validation')}
+        {link('/recommendations', '✦', 'Customer Insights')}
+        {isAdmin && link('/diagnostics', '✓', 'Store Diagnostics')}
       </nav>
 
       <div className="sidebar-divider" />
@@ -64,6 +64,7 @@ export default function Sidebar() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, marginBottom: 4 }}>
                 {link('/products', '📦', 'Product List', false, null, true)}
                 {isAdmin && link('/vendors', '🏢', 'Vendor List', false, null, true)}
+                {isAdmin && link('/customers', '👥', 'Customer List', false, null, true)}
               </div>
             )}
           </div>
@@ -71,6 +72,7 @@ export default function Sidebar() {
 
         {link('/sentiment', '💬', 'Sentiment AI')}
         {(isAdmin || isVendor) && link('/studio', '✧', 'AI Studio')}
+        {(isAdmin || isVendor) && link('/analyst', '📊', 'AI Data Analyst')}
         {isAdmin && link('/approvals', '⊙', 'Vendor Approvals')}
       </nav>
 

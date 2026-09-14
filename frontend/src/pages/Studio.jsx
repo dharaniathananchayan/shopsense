@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import api from '../api'
 import { useAuth } from '../context/AuthContext'
-import AIAgentWorkflow from '../components/AIAgentWorkflow'
 
 export default function Studio() {
   const { session } = useAuth()
@@ -123,9 +122,9 @@ export default function Studio() {
   return (
     <div className="page">
       <div className="page-header">
-        <div className="page-title">AI Studio & Autonomous Agent</div>
+        <div className="page-title">AI Studio</div>
         <div className="page-subtitle">
-          Draft high-converting SEO product listings and run proactive autonomous AI store diagnostic audits.
+          Draft high-converting SEO product listings using AI.
         </div>
       </div>
 
@@ -134,10 +133,6 @@ export default function Studio() {
           {notice.message}
         </div>
       )}
-
-      {/* Autonomous AI Agent Store Audit Component */}
-      <AIAgentWorkflow />
-
 
       <div className="studio-grid">
         <form onSubmit={handleGenerate} className="card">

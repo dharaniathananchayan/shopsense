@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api'
-import AIDataAnalyst from '../components/AIDataAnalyst'
 import ChartAnalytics from '../components/ChartAnalytics'
-import AIAgentWorkflow from '../components/AIAgentWorkflow'
 
 const fmt = (n) => Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -87,14 +85,8 @@ export default function Analytics() {
 
       {error && <div className="alert alert-error" style={{ marginBottom: 20 }}>{error}</div>}
 
-      {/* Feature 1: Interactive Chart Analytics Component */}
+      {/* Interactive Chart Analytics Component */}
       <ChartAnalytics />
-
-      {/* AI Data Analyst Section */}
-      <AIDataAnalyst />
-
-      {/* Autonomous AI Agent Workflow Audit Component */}
-      <AIAgentWorkflow />
 
 
 
@@ -140,7 +132,7 @@ export default function Analytics() {
                 <div key={cat} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 90px 70px', gap: 10, alignItems: 'center', fontSize: 13 }}>
                   <span style={{ fontWeight: 600 }}>{cat}</span>
                   <div className="progress-bar" style={{ width: '100%' }}>
-                    <div className="progress-bar-fill" style={{ width: `${categoryDist.percentages[idx]}%`, background: 'var(--primary)' }} />
+                    <div className="progress-bar-fill" style={{ width: `${categoryDist.percentages[idx]}%` }} />
                   </div>
                   <strong>₹{fmt(categoryDist.series[idx])}</strong>
                   <span style={{ color: 'var(--muted)', textAlign: 'right' }}>{categoryDist.percentages[idx]}%</span>

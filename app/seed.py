@@ -255,22 +255,29 @@ def seed_data():
     products = db.query(Product).all()
 
     # --- Customers ---
-    if db.query(Customer).count() < 5:
+    if db.query(Customer).count() < 25:
         print("Seeding customers...")
         customer_names = [
             ("Alice", "Johnson"), ("Bob", "Smith"), ("Carol", "Davis"),
             ("David", "Wilson"), ("Emma", "Brown"), ("Frank", "Taylor"),
             ("Grace", "Anderson"), ("Henry", "Thomas"), ("Isabel", "Martinez"),
-            ("Jack", "Robinson"),
+            ("Jack", "Robinson"), ("Karen", "White"), ("Leo", "Harris"),
+            ("Mia", "Martin"), ("Noah", "Thompson"), ("Olivia", "Garcia"),
+            ("Paul", "Martinez"), ("Quinn", "Robinson"), ("Ryan", "Clark"),
+            ("Sophia", "Rodriguez"), ("Tom", "Lewis"), ("Uma", "Lee"),
+            ("Victor", "Walker"), ("Wendy", "Hall"), ("Xavier", "Allen"),
+            ("Yara", "Young"), ("Zack", "King")
         ]
         for i, (first, last) in enumerate(customer_names):
-            c = Customer(
-                first_name=first,
-                last_name=last,
-                email=f"{first.lower()}.{last.lower()}@example.com",
-                phone=f"555-{1000 + i}",
-            )
-            db.add(c)
+            email = f"{first.lower()}.{last.lower()}@example.com"
+            if not db.query(Customer).filter_by(email=email).first():
+                c = Customer(
+                    first_name=first,
+                    last_name=last,
+                    email=email,
+                    phone=f"555-{1000 + i}",
+                )
+                db.add(c)
         db.commit()
 
     customers = db.query(Customer).all()
@@ -286,6 +293,10 @@ def seed_data():
             # Day of week seasonality: weekends have slightly higher volume
             is_weekend = date.weekday() >= 5
             daily_tx_count = random.randint(3, 7) if is_weekend else random.randint(2, 5)
+
+            # Deliberately drop sales last week so the "Why did my sales drop last week?" question is meaningful
+            if 7 <= day_offset <= 14:
+                daily_tx_count = random.randint(0, 2)
 
             for _ in range(daily_tx_count):
                 p = random.choice(products)

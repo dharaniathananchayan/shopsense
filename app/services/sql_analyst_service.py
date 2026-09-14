@@ -73,6 +73,7 @@ Rules:
 - Output ONLY the raw SQL query string inside a single block, with no explanations.
 - Filter completed transactions using `payment_status = 'COMPLETED'`.
 - If dates are mentioned like 'last week' or 'recent', use datetime functions or query recent transaction dates.
+- ALWAYS JOIN tables properly when referencing columns across tables (e.g. JOIN products p ON t.product_id = p.id to get p.category).
 - Keep query concise and limited to 20 rows.
 """
 
@@ -110,6 +111,11 @@ Rules:
                 generated_sql = f"SELECT DATE(transaction_date) as sales_date, COUNT(id) as total_orders, SUM(total_amount) as daily_revenue FROM transactions WHERE vendor_id = {vendor_id} AND payment_status = 'COMPLETED' GROUP BY DATE(transaction_date) ORDER BY sales_date DESC LIMIT 14;"
             else:
                 generated_sql = "SELECT DATE(transaction_date) as sales_date, COUNT(id) as total_orders, SUM(total_amount) as daily_revenue FROM transactions WHERE payment_status = 'COMPLETED' GROUP BY DATE(transaction_date) ORDER BY sales_date DESC LIMIT 14;"
+        elif "categor" in q_lower:
+            if vendor_id:
+                generated_sql = f"SELECT p.category, SUM(t.total_amount) as total_revenue FROM transactions t JOIN products p ON t.product_id = p.id WHERE t.vendor_id = {vendor_id} AND t.payment_status = 'COMPLETED' GROUP BY p.category ORDER BY total_revenue DESC LIMIT 5;"
+            else:
+                generated_sql = "SELECT p.category, SUM(t.total_amount) as total_revenue FROM transactions t JOIN products p ON t.product_id = p.id WHERE t.payment_status = 'COMPLETED' GROUP BY p.category ORDER BY total_revenue DESC LIMIT 5;"
         elif "product" in q_lower or "top" in q_lower:
             if vendor_id:
                 generated_sql = f"SELECT p.product_name, SUM(t.quantity) as total_units, SUM(t.total_amount) as total_revenue FROM transactions t JOIN products p ON t.product_id = p.id WHERE t.vendor_id = {vendor_id} AND t.payment_status = 'COMPLETED' GROUP BY p.id, p.product_name ORDER BY total_revenue DESC LIMIT 5;"
@@ -167,12 +173,22 @@ CRITICAL FORMATTING RULE: Do NOT use any markdown asterisks (no ** or *). Write 
                 response.raise_for_status()
                 raw_insight = response.json()["choices"][0]["message"]["content"].strip()
                 cleaned_insight = clean_markdown_formatting(raw_insight)
+                chart_type = None
+                q_lower = question.lower()
+                if "pie" in q_lower:
+                    chart_type = "pie"
+                elif "bar" in q_lower:
+                    chart_type = "bar"
+                elif "line" in q_lower:
+                    chart_type = "line"
+
                 return {
                     "question": question,
                     "generated_sql": generated_sql,
                     "query_results": query_results,
                     "analysis_insight": cleaned_insight,
-                    "ai_provider": f"Groq Text-to-SQL ({model})"
+                    "ai_provider": f"Groq Text-to-SQL ({model})",
+                    "chart_type": chart_type
                 }
             except Exception as e:
                 continue
@@ -190,10 +206,20 @@ CRITICAL FORMATTING RULE: Do NOT use any markdown asterisks (no ** or *). Write 
     else:
         fallback_insight = "No matching records found for the requested time frame or criteria."
 
+    chart_type = None
+    q_lower = question.lower()
+    if "pie" in q_lower:
+        chart_type = "pie"
+    elif "bar" in q_lower:
+        chart_type = "bar"
+    elif "line" in q_lower:
+        chart_type = "line"
+
     return {
         "question": question,
         "generated_sql": generated_sql,
         "query_results": query_results,
         "analysis_insight": clean_markdown_formatting(fallback_insight),
-        "ai_provider": "ShopSense Local Text-to-SQL Engine"
+        "ai_provider": "ShopSense Local Text-to-SQL Engine",
+        "chart_type": chart_type
     }

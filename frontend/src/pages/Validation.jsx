@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../api'
+import AIAgentWorkflow from '../components/AIAgentWorkflow'
 
 const CHECK_ICONS = { pass: '✓', fail: '✕' }
 
@@ -26,11 +27,13 @@ export default function Validation() {
   return (
     <div className="page">
       <div className="page-header">
-        <div className="page-title">Historical Data Validation</div>
+        <div className="page-title">Store Diagnostics & Validation</div>
         <div className="page-subtitle">
           Cross-check analytical outputs against raw transaction history. Four integrity checks run against the live database.
         </div>
       </div>
+
+      <AIAgentWorkflow />
 
       {/* Run button + overall status */}
       <div className="card" style={{ marginBottom: 24 }}>
