@@ -1,6 +1,6 @@
 import random
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import SessionLocal, engine, Base
 from app.models import Vendor, Product, Customer, Transaction, ProductReview
 from app.models.user import User
@@ -286,7 +286,7 @@ def seed_data():
     tx_count = db.query(Transaction).count()
     if tx_count < 120:
         print("Seeding extended historical transactions for time-series ML forecasting...")
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         # Seed daily transactions across 60 days with realistic seasonal curves
         for day_offset in range(60, -1, -1):
             date = now - timedelta(days=day_offset, hours=random.randint(0, 20), minutes=random.randint(0, 50))
@@ -345,7 +345,7 @@ def seed_data():
                     cons=json.dumps(r_data["cons"]),
                     aspect_scores=json.dumps(r_data["aspects"]),
                     summary=r_data["summary"],
-                    created_at=datetime.utcnow() - timedelta(days=random.randint(1, 45)),
+                    created_at=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=random.randint(1, 45)),
                 )
                 db.add(rev)
 
@@ -381,7 +381,7 @@ def seed_data():
                         cons=json.dumps(tmpl[5]),
                         aspect_scores=json.dumps({"quality": int(tmpl[2]), "value": int(tmpl[2] - 5), "usability": int(tmpl[2] + 3), "durability": int(tmpl[2] - 2)}),
                         summary=f"Customer review evaluating {p.product_name}: highlights {', '.join(tmpl[4])}.",
-                        created_at=datetime.utcnow() - timedelta(days=random.randint(1, 50)),
+                        created_at=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=random.randint(1, 50)),
                     )
                     db.add(rev)
 

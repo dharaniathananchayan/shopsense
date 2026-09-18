@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate
-from datetime import datetime
+from datetime import datetime, timezone
 
 def create_product(db: Session, product: ProductCreate, approval_status: str = "APPROVED") -> Product:
     db_product = Product(**product.model_dump(), approval_status=approval_status,
-                         approved_at=datetime.utcnow() if approval_status == "APPROVED" else None)
+                         approved_at=datetime.now(timezone.utc).replace(tzinfo=None) if approval_status == "APPROVED" else None)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -50,7 +50,7 @@ def set_product_approval(db: Session, product_id: int, approval_status: str, app
         return None
     product.approval_status = approval_status
     product.approval_note = approval_note
-    product.approved_at = datetime.utcnow() if approval_status == "APPROVED" else None
+    product.approved_at = datetime.now(timezone.utc).replace(tzinfo=None) if approval_status == "APPROVED" else None
     product.is_active = approval_status == "APPROVED"
     db.commit()
     db.refresh(product)

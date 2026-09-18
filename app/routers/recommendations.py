@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import get_db
 from app.models.product import Product
 from app.models.transaction import Transaction
@@ -173,7 +173,7 @@ def trending(
 
     Rule: rank by total units sold within the look-back window.
     """
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
     rows = (
         db.query(

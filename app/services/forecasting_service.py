@@ -2,7 +2,7 @@ import logging
 import math
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -20,7 +20,7 @@ def _build_daily_series(
     days_back: int = 60,
 ) -> pd.DataFrame:
     """Extract and aggregate daily completed sales quantities over the historical window."""
-    cutoff = datetime.utcnow() - timedelta(days=days_back)
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days_back)
 
     query = (
         db.query(
@@ -44,7 +44,7 @@ def _build_daily_series(
 
     # Create full contiguous date range
     start_date = (cutoff + timedelta(days=1)).date()
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).replace(tzinfo=None).date()
     all_dates = pd.date_range(start=start_date, end=end_date, freq="D")
     df = pd.DataFrame({"date": all_dates})
     df["date_str"] = df["date"].dt.strftime("%Y-%m-%d")
