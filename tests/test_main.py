@@ -11,9 +11,18 @@ client = TestClient(app)
 def auth_headers():
     db = SessionLocal()
     admin_user = db.query(User).filter(User.role == "ADMIN").first() or db.query(User).first()
-    db.close()
-
-    assert admin_user is not None, "Database has no admin user for testing"
+    if not admin_user:
+        from app.utils.security import hash_password
+        admin_user = User(
+            email="johndoe@gmail.com",
+            hashed_password=hash_password("admin123"),
+            full_name="John Doe",
+            role="ADMIN",
+            approval_status="APPROVED",
+        )
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
 
     token = create_access_token({
         "sub": str(admin_user.id),
@@ -21,6 +30,7 @@ def auth_headers():
         "role": admin_user.role,
         "vendor_id": admin_user.vendor_id
     })
+    db.close()
     return {"Authorization": f"Bearer {token}"}
 
 def test_root_endpoint():

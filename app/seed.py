@@ -385,6 +385,27 @@ def seed_data():
                     )
                     db.add(rev)
 
+        # Seed default role users if missing
+        from app.utils.security import hash_password
+        first_vendor = db.query(Vendor).first()
+        vendor_id = first_vendor.id if first_vendor else None
+
+        default_users = [
+            ("johndoe@gmail.com", "John Doe", "ADMIN", None, "admin123"),
+            ("janedoe@gmail.com", "Jane Doe", "VENDOR", vendor_id, "password123"),
+            ("firstcustomer@gmail.com", "First Customer", "CUSTOMER", None, "password123"),
+        ]
+
+        for email, name, role, v_id, pwd in default_users:
+            if not db.query(User).filter_by(email=email).first():
+                db.add(User(
+                    email=email,
+                    hashed_password=hash_password(pwd),
+                    full_name=name,
+                    role=role,
+                    vendor_id=v_id,
+                    approval_status="APPROVED",
+                ))
         db.commit()
 
     print("Data seeding and verification complete!")
@@ -393,6 +414,7 @@ def seed_data():
     print(f"  - Customers: {db.query(Customer).count()}")
     print(f"  - Transactions: {db.query(Transaction).count()}")
     print(f"  - Reviews: {db.query(ProductReview).count()}")
+    print(f"  - Users: {db.query(User).count()}")
     db.close()
 
 
