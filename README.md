@@ -1,121 +1,239 @@
 # 🛒 ShopSense — AI-Powered Multi-Vendor E-Commerce Platform
 
-ShopSense is a next-generation multi-vendor e-commerce analytics and marketplace management platform. It transforms raw transactional data into actionable business intelligence using predictive machine learning models, vector semantic search, and LLM-driven seller assistance.
+ShopSense is an enterprise-grade multi-vendor e-commerce platform and analytics engine. It combines an intuitive customer shopping experience with vendor catalog tools, time-series demand forecasting, vector semantic search, and an autonomous generative AI intelligence suite.
+
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 ---
 
-## ✨ Key Features
+## 🌟 Architecture & Core Modules
 
-### 🧠 Generative AI & Autonomous Agents
-- **AI Studio & Vision AI**: Upload product images to automatically generate SEO-optimized product listings, categorize items, and extract marketing copy, feature highlights, hashtags, and AI SEO quality scores instantly.
-- **AI Data Analyst**: Conversational BI query engine converting natural language seller questions into safe SQLite `SELECT` queries, generating interactive charts, and synthesizing executive insights.
-- **RAG-Powered Shopping Assistant**: Natural language catalog chatbot grounded strictly in live inventory to answer customer queries with targeted recommendations via a floating UI.
-- **Autonomous Store Diagnostics**: Proactive AI agent workflow that autonomously audits vendor inventory velocity and generates actionable pricing advisories and stockout warnings.
+ShopSense provides dedicated interfaces tailored for three distinct user roles: **Customers**, **Vendors**, and **Administrators**.
 
-### 📊 Analytics & Business Intelligence
-- **Vendor Benchmarking**: Performance comparison engine rating vendor revenue, order volume, AOV, and catalog size against marketplace averages.
-- **Interactive Dashboards**: Real-time analytics covering category revenue distribution, sales trends, and platform performance.
-- **Real-Time Sales Streams**: Asynchronous WebSocket event streams pushing live transaction notifications to the dashboard without polling.
-- **Sentiment Analysis**: Multi-aspect LLM analysis extracting sentiment scores (0–100), label classifications, pros/cons, and aspect breakdowns from customer reviews.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        ShopSense React 19 Frontend                      │
+├────────────────────┬──────────────────────┬────────────────────────────┤
+│   Customer Store   │    Vendor Portal     │     Admin / Analytics      │
+│  • Browse & Search │  • Catalog & Images  │  • Platform Health         │
+│  • Cart & Checkout │  • Inventory & ROP   │  • Vendor Approvals        │
+│  • Orders & Alerts │  • Benchmarks        │  • AI Data Analyst (SQL)   │
+│  • Wishlist & Comp │  • AI Listing Gen    │  • Real-Time WS Stream     │
+└─────────┬──────────┴──────────┬───────────┴─────────────┬──────────────┘
+          │                     │                         │
+          ▼                     ▼                         ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                       FastAPI REST & WebSocket API                     │
+├────────────────────┬──────────────────────┬────────────────────────────┤
+│   Authentication   │    AI & LLM Services │     Machine Learning       │
+│  • JWT RBAC        │  • Vision AI Lab     │  • ARIMA & Holt Smoothing  │
+│  • Multi-Tab Sync  │  • RAG Chatbot       │  • TF-IDF Vector Search    │
+│  • Role Guards     │  • Sentiment Aspects │  • Taste Centroids (KNN)   │
+└─────────┬──────────┴──────────┬───────────┴─────────────┬──────────────┘
+          │                     │                         │
+          ▼                     ▼                         ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                    SQLite / SQLAlchemy 2.0 Database                    │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-### 📈 Machine Learning & Forecasting
-- **Time-Series Demand Forecasting**: Implements **ARIMA** & **Holt's Exponential Smoothing** models to predict 14-day sales demand.
-- **Inventory Intelligence**: Automated computation of Reorder Points (ROP), Safety Stock, and Stockout Urgency based on lead times and demand velocity.
+---
 
-### 🎯 Discovery & Personalization
-- **Vector Semantic Search**: Dense TF-IDF embeddings with cosine similarity distance providing natural language semantic search.
-- **Customer Taste Centroids**: Calculative vectors tracking customer purchase behavior to surface unbought high-affinity SKUs.
-- **Nearest Neighbors (KNN)**: "Similar Products" discovery via multi-dimensional cosine distance across the catalog.
-- **Rule-Based Recommendations**: Top in Category, Customers Also Bought (Collaborative Filtering), and Trending Velocity.
+## ✨ Feature Breakdown
 
-### 🛍️ Customer Experience
-- **Wishlists & Price Drop Alerts**: Manage multiple themed wishlists and opt-in to track price drops on individual products.
-- **Product Comparison Tool**: Side-by-side product comparison matrix enriched by LLM-powered "AI Consensus" and "Top Pros" summaries.
+### 🛍️ 1. Customer Shopping Experience
+- **Interactive Storefront (`/shop`)**: Multi-faceted product catalog featuring category filters, price range sliders, instant search, and grid/list view toggles.
+- **Product Detail View (`/product/:id`)**: High-res image display, stock availability indicators, customer review breakdowns, and direct cart/wishlist integration.
+- **Shopping Cart & Checkout Simulator (`/cart`)**: Persistent cart management with live item quantity updates, subtotal and tax computations, and one-click mock checkout.
+- **Order Management & Tracking (`/orders`)**: Comprehensive order history displaying order statuses (`PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`), delivery details, and self-service order cancellation.
+- **Themed Wishlists & Price Drop Alerts (`/wishlists`)**: Group saved items across custom wishlists, track real-time price reductions, and toggle active email/notification alerts.
+- **Product Comparison Engine (`/compare`)**: Side-by-side comparison matrix with automated attribute matching, pricing contrast, and LLM-generated **AI Consensus** summaries.
+- **Personalized "You Might Like" (`/you-might-like`)**: Machine learning recommendation feed powered by customer taste centroids and collaborative purchasing patterns.
+
+### 🏪 2. Vendor Catalog & Operations
+- **Product Catalog Management (`/products`)**: Filter by vendor, edit product specifications in-place, and upload or remove high-resolution product media.
+- **Vision AI Studio (`/ai-studio`)**: Upload raw product photos to automatically detect categories, write SEO-optimized marketing copy, extract bullet highlights, generate hashtags, and calculate AI listing quality scores.
+- **Vendor Benchmarking**: Gauge individual vendor performance against platform averages across revenue, order velocity, Average Order Value (AOV), and catalog size.
+- **Inventory Intelligence**: Dynamic calculation of **Reorder Points (ROP)**, safety stock thresholds, and stockout urgency warnings based on historical lead times and sales velocity.
+
+### 🧠 3. Autonomous AI & Analytics Suite
+- **AI Data Analyst (`/analyst`)**: Conversational business intelligence engine converting natural language questions into safe, parameterized SQLite `SELECT` queries, accompanied by interactive charts and executive insights.
+- **RAG-Powered Shopping Assistant**: Catalog chatbot grounded strictly in live inventory data using Retrieval-Augmented Generation to assist shoppers directly via a floating chat widget.
+- **Autonomous Store Diagnostics**: Proactive audit workflow identifying dormant inventory, negative margin items, and imminent stockout risks with recommended pricing adjustments.
+- **Review Sentiment Engine**: Multi-aspect LLM analysis scoring customer feedback (0–100), detecting overall sentiment labels, and isolating product pros and cons.
+- **Real-Time Sales Stream (`/ws/sales`)**: Asynchronous WebSocket event broadcasting live sales transactions directly to dashboard subscriber cards.
+
+### 🔍 4. Discovery & Recommendation Models
+- **Vector Semantic Search**: Dense TF-IDF vector embeddings with cosine similarity distance matching natural language shopper intent beyond keyword matching.
+- **Taste Centroids**: Vectorized customer affinity profiles generated from previous order history to surface high-affinity catalog items.
+- **Collaborative Filtering & Velocity**: "Customers Also Bought" co-occurrence recommendations and high-velocity trending products.
 
 ---
 
 ## 🛠 Tech Stack
 
-**Backend:**
-- **Language**: Python 3.12
-- **Framework**: **FastAPI** (Async REST, WebSockets, OpenAPI)
-- **Database**: **SQLAlchemy** 2.0 + SQLite
-- **Security**: **PyJWT** & **Bcrypt** (RBAC)
-- **AI Models**: **Groq API** (`openai`, `qwen`, `allam`)
-
-**Frontend:**
-- **Framework**: **React 19** + **Vite 8**
-- **State & Routing**: **React Router DOM v7**
-- **Styling**: Custom CSS properties, responsive grids, full-bleed tables.
+| Layer | Technologies |
+| :--- | :--- |
+| **Backend** | Python 3.12, **FastAPI**, SQLAlchemy 2.0, Pydantic v2, Uvicorn, SQLite |
+| **Frontend** | **React 19**, **Vite 6**, React Router DOM v7, Axios, Lucide Icons, Custom Design System |
+| **Generative AI** | **Groq API** (`openai`, `qwen`, `allam`), Vision AI Models, RAG Pipelines |
+| **Forecasting & ML** | Statsmodels (**ARIMA**, **Holt's Exponential Smoothing**), Scikit-Learn (TF-IDF, Cosine Similarity) |
+| **Auth & Security** | JWT (PyJWT), Passlib (Bcrypt), Cross-tab storage listeners, RBAC Role Dependencies |
+| **DevOps & Containers**| Docker, Docker Compose, GitHub Actions |
 
 ---
 
 ## 🚀 Getting Started
 
+### Prerequisites
+- **Python 3.11+** (Python 3.12 recommended)
+- **Node.js 18+** & **npm**
+- *(Optional)* **Groq API Key** for AI features
+
+---
+
 ### 1. Backend Setup
+
 ```bash
-# Clone the workspace
-cd shop-sense
+# 1. Clone the repository
+git clone https://github.com/dharaniathananchayan/shopsense.git
+cd shopsense
 
-# Create and activate virtual environment
+# 2. Create and activate a virtual environment
 python -m venv venv
-venv\Scripts\activate   # Windows
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 
-# Install Python dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# (Optional) Set up Environment Variables
-# Create a .env file with your GROQ_API_KEY
-GROQ_API_KEY=your_groq_api_key_here
-
-# Seed initial database
-python -m app.seed
-
-# Launch backend server
-uvicorn app.main:app --reload
+# 4. Configure environment variables
+# Copy sample env or create a .env file:
+cp .env.example .env
 ```
-Swagger UI docs will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+Ensure your `.env` contains:
+```env
+DATABASE_URL=sqlite:///./shopsense.db
+JWT_SECRET_KEY=replace-with-a-long-random-secret
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+```bash
+# 5. Seed the database with products, reviews, and test users
+python -m app.seed
+python scripts/seed_janedoe.py
+python scripts/seed_customer.py
+
+# 6. Start the FastAPI server
+uvicorn app.main:app --reload --port 8000
+```
+Interactive Swagger API documentation will be available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+---
 
 ### 2. Frontend Setup
+
 ```bash
-# Navigate to frontend folder
+# Open a new terminal and navigate to the frontend directory
 cd frontend
 
-# Install dependencies and build
+# Install dependencies
 npm install
-npm run build
 
-# Launch dev server
+# Start the Vite development server
 npm run dev
 ```
-Vite frontend dev server will launch at [http://localhost:5173](http://localhost:5173).
+The application will launch at [http://localhost:5173](http://localhost:5173).
 
-### 3. Running with Docker
+---
+
+### 3. Preconfigured Demo Accounts
+
+| Role | Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `johndoe@gmail.com` | `admin123` | Full dashboard, AI Analyst, vendor approvals, platform metrics |
+| **Vendor** | `janedoe@gmail.com` | `password123` | Catalog editing, image upload, AI Studio, store diagnostics, ROP |
+| **Customer** | `firstcustomer@gmail.com` | `password123` | Storefront, cart, checkout, order history, wishlists, compare |
+
+---
+
+### 4. Running with Docker Compose
+
+To spin up both frontend and backend in isolated production containers:
+
 ```bash
-# Build and run containerized application via Docker Compose
 docker-compose up --build
+```
+Access the application at [http://localhost:8000](http://localhost:8000).
+
+---
+
+## 📂 Repository Structure
+
+```text
+shopsense/
+├── app/
+│   ├── main.py                  # FastAPI application entry point & CORS
+│   ├── config.py                # App configuration & environment loader
+│   ├── database.py              # SQLAlchemy engine & session factory
+│   ├── models/                  # Database schemas (User, Product, Order, Wishlist, etc.)
+│   ├── schemas/                 # Pydantic request & response validation schemas
+│   ├── routers/                 # Modular API endpoints
+│   │   ├── auth.py              # JWT login, registration & /me profile
+│   │   ├── products.py          # Catalog CRUD, image uploads & inventory metrics
+│   │   ├── orders.py            # Customer order lifecycle & history
+│   │   ├── wishlists.py         # Multi-wishlist & price alert toggles
+│   │   ├── ai.py                # AI Studio, diagnostics & natural language prompts
+│   │   ├── analytics.py         # Vendor benchmarking & executive summaries
+│   │   ├── recommendations.py   # Vector search & centroid personalization
+│   │   └── websocket.py         # Live sales notification streams
+│   ├── services/                # Core AI, ML, and Vector algorithms
+│   │   ├── ai_service.py        # Vision AI & product copy generator
+│   │   ├── forecasting_service.py # ARIMA & Holt demand forecaster
+│   │   ├── sentiment_service.py # Aspect-based review sentiment extractor
+│   │   ├── vector_service.py    # TF-IDF embeddings & cosine similarity
+│   │   ├── rag_service.py       # Inventory-grounded RAG shopping assistant
+│   │   └── sql_analyst_service.py # Text-to-SQL business analyst engine
+│   └── static/images/           # Product media assets & uploads
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx              # Routes & role-guarded views
+│   │   ├── api.js               # Axios client with JWT interceptor
+│   │   ├── context/             # Global Auth, Cart, and Compare state providers
+│   │   ├── components/          # Topbar, Sidebar, Chatbot, Modals
+│   │   └── pages/               # Views: Shop, ProductDetail, Cart, Orders,
+│   │                            # Wishlists, Compare, YouMightLike, Products,
+│   │                            # AIStudio, Analyst, Inventory, Analytics
+│   ├── vite.config.js           # Vite server & API proxy config
+│   └── package.json
+├── scripts/                     # Seeders & data migration utilities
+├── requirements.txt             # Python backend dependencies
+├── Dockerfile                   # Multi-stage production container build
+├── docker-compose.yml           # Multi-container orchestration
+└── README.md
 ```
 
 ---
 
-## 📂 Project Structure
+## 🧪 Testing
 
-```text
-shop-sense/
-├── .github/workflows/   # CI/CD pipelines
-├── app/
-│   ├── main.py          # FastAPI entry point
-│   ├── models/          # SQLAlchemy database models
-│   ├── routers/         # REST API endpoints
-│   └── services/        # AI, ML, and Vector engines
-│       ├── ai_service.py
-│       ├── forecasting_service.py
-│       ├── sentiment_service.py
-│       ├── vector_service.py
-│       ├── rag_service.py
-│       └── sql_analyst_service.py
-├── frontend/            # React 19 SPA
-├── tests/               # Pytest unit tests
-├── Dockerfile           # Multi-stage production build
-└── docker-compose.yml   # Container orchestration
+Run test suites for the backend services:
+
+```bash
+# Run pytest across all test modules
+pytest tests/ -v
 ```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
