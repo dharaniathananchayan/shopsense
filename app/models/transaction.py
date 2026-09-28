@@ -14,6 +14,7 @@ class Transaction(Base):
     unit_price = Column(Float, nullable=False)
     total_amount = Column(Float, nullable=False)
     payment_status = Column(String(20), default="COMPLETED")
+    order_status = Column(String(50), default="PROCESSING")
     sales_platform = Column(String(50), nullable=False, default="ShopSense Direct")
     transaction_date = Column(DateTime, default=datetime.utcnow)
 

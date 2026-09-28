@@ -16,6 +16,8 @@ from app.routers import (
     forecasting,
     reviews,
     websocket,
+    orders,
+    wishlists,
 )
 
 # Create all tables
@@ -57,6 +59,8 @@ app.include_router(recommendations.router, prefix="/api/v1")
 app.include_router(forecasting.router, prefix="/api/v1")
 app.include_router(reviews.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")
+app.include_router(orders.router, prefix="/api/v1")
+app.include_router(wishlists.router, prefix="/api/v1")
 
 
 frontend_dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"

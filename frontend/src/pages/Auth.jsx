@@ -12,7 +12,7 @@ export default function Auth() {
     full_name: '',
     email: '',
     password: '',
-    role: 'VENDOR',
+    role: 'CUSTOMER',
     vendor_id: '',
   })
 
@@ -24,8 +24,12 @@ export default function Auth() {
     setNotice(null)
     setLoading(true)
     try {
-      await login(loginData.email, loginData.password)
-      navigate('/')
+      const sessionData = await login(loginData.email, loginData.password)
+      if (sessionData.role === 'CUSTOMER') {
+        navigate('/shop')
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       setNotice({
         type: 'error',
@@ -196,6 +200,7 @@ export default function Auth() {
                 value={registerData.role}
                 onChange={(e) => setRegisterData((prev) => ({ ...prev, role: e.target.value }))}
               >
+                <option value="CUSTOMER">Customer</option>
                 <option value="VENDOR">Vendor</option>
                 <option value="ADMIN">Administrator (Initial setup only)</option>
               </select>

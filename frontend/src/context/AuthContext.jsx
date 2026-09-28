@@ -32,7 +32,16 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  useEffect(() => { hydrate() }, [hydrate])
+  useEffect(() => { 
+    hydrate() 
+    const handleStorage = (e) => {
+      if (e.key === 'shopsense_session') {
+        hydrate()
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [hydrate])
 
   // Vite hot reload can preserve React state from an older build.  Do not let
   // an in-memory profile without its JWT remain visible as a signed-in user.

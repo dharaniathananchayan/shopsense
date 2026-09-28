@@ -1,8 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api/v1',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: '/api/v1'
 })
 
 // Inject Bearer token from localStorage before every request

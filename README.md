@@ -7,7 +7,7 @@ ShopSense is a next-generation multi-vendor e-commerce analytics and marketplace
 ## ✨ Key Features
 
 ### 🧠 Generative AI & Autonomous Agents
-- **AI Studio**: Generate SEO-optimized product listings with taglines, structured marketing copy, highlights, hashtags, and AI SEO quality scores instantly.
+- **AI Studio & Vision AI**: Upload product images to automatically generate SEO-optimized product listings, categorize items, and extract marketing copy, feature highlights, hashtags, and AI SEO quality scores instantly.
 - **AI Data Analyst**: Conversational BI query engine converting natural language seller questions into safe SQLite `SELECT` queries, generating interactive charts, and synthesizing executive insights.
 - **RAG-Powered Shopping Assistant**: Natural language catalog chatbot grounded strictly in live inventory to answer customer queries with targeted recommendations via a floating UI.
 - **Autonomous Store Diagnostics**: Proactive AI agent workflow that autonomously audits vendor inventory velocity and generates actionable pricing advisories and stockout warnings.
@@ -27,6 +27,10 @@ ShopSense is a next-generation multi-vendor e-commerce analytics and marketplace
 - **Customer Taste Centroids**: Calculative vectors tracking customer purchase behavior to surface unbought high-affinity SKUs.
 - **Nearest Neighbors (KNN)**: "Similar Products" discovery via multi-dimensional cosine distance across the catalog.
 - **Rule-Based Recommendations**: Top in Category, Customers Also Bought (Collaborative Filtering), and Trending Velocity.
+
+### 🛍️ Customer Experience
+- **Wishlists & Price Drop Alerts**: Manage multiple themed wishlists and opt-in to track price drops on individual products.
+- **Product Comparison Tool**: Side-by-side product comparison matrix enriched by LLM-powered "AI Consensus" and "Top Pros" summaries.
 
 ---
 

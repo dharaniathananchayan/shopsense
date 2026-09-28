@@ -37,3 +37,7 @@ def apply_sqlite_migrations():
         if "sales_platform" not in transaction_columns:
             connection.execute(text("ALTER TABLE transactions ADD COLUMN sales_platform VARCHAR(50) NOT NULL DEFAULT 'ShopSense Direct'"))
             connection.execute(text("UPDATE transactions SET sales_platform = CASE id % 3 WHEN 0 THEN 'Amazon' WHEN 1 THEN 'Flipkart' ELSE 'ShopSense Direct' END"))
+        if "order_status" not in transaction_columns:
+            connection.execute(text("ALTER TABLE transactions ADD COLUMN order_status VARCHAR(50) NOT NULL DEFAULT 'PROCESSING'"))
+            # Randomize order_status for existing data
+            connection.execute(text("UPDATE transactions SET order_status = CASE id % 4 WHEN 0 THEN 'PROCESSING' WHEN 1 THEN 'SHIPPED' WHEN 2 THEN 'DELIVERED' ELSE 'DELIVERED' END"))

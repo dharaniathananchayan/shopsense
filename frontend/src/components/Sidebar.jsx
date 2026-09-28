@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
 export default function Sidebar() {
   const { session, logout } = useAuth()
+  const { cartCount } = useCart()
   const navigate = useNavigate()
   const isAdmin  = session?.role === 'ADMIN'
   const isVendor = session?.role === 'VENDOR'
@@ -24,6 +26,8 @@ export default function Sidebar() {
     </NavLink>
   )
 
+  const isCustomer = session?.role === 'CUSTOMER'
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -33,48 +37,58 @@ export default function Sidebar() {
 
       <p className="sidebar-section-label">Workspace</p>
       <nav className="sidebar-nav">
-        {link('/', '▦', 'Overview', true)}
+        {!isCustomer && link('/', '▦', 'Overview', true)}
         {isAdmin && link('/analytics', '◫', 'Analytics')}
-        {link('/forecasting', '📈', 'ML Forecasting')}
+        {!isCustomer && link('/forecasting', '📈', 'ML Forecasting')}
         {(isAdmin || isVendor) && link('/inventory', '▤', 'Inventory')}
         {isAdmin && link('/segments', '◈', 'Segments')}
-        {link('/recommendations', '✦', 'Customer Insights')}
+        {!isCustomer && link('/recommendations', '✦', 'Customer Insights')}
         {isAdmin && link('/diagnostics', '✓', 'Store Diagnostics')}
+        
+        {isCustomer && link('/shop', '🛍️', 'Direct Shopping')}
+        {isCustomer && link('/you-might-like', '✨', 'You Might Like')}
+        {isCustomer && link('/wishlists', '❤️', 'Wishlists')}
+        {isCustomer && link('/cart', '🛒', 'Cart', false, cartCount > 0 ? cartCount : null)}
+        {isCustomer && link('/orders', '📦', 'My Orders')}
       </nav>
 
-      <div className="sidebar-divider" />
-      <p className="sidebar-section-label">Catalog & AI</p>
-      <nav className="sidebar-nav">
-        {/* Catalog Accordion Menu */}
-        {(isAdmin || isVendor) && (
-          <div>
-            <div
-              className="sidebar-link"
-              onClick={() => setCatalogOpen(!catalogOpen)}
-              style={{ cursor: 'pointer', justifyContent: 'space-between' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="sidebar-icon">📑</span>
-                <span style={{ fontWeight: 600 }}>Catalog</span>
-              </div>
-              <span style={{ fontSize: 11, opacity: 0.7 }}>{catalogOpen ? '▼' : '▶'}</span>
-            </div>
+      {!isCustomer && (
+        <>
+          <div className="sidebar-divider" />
+          <p className="sidebar-section-label">Catalog & AI</p>
+          <nav className="sidebar-nav">
+            {/* Catalog Accordion Menu */}
+            {(isAdmin || isVendor) && (
+              <div>
+                <div
+                  className="sidebar-link"
+                  onClick={() => setCatalogOpen(!catalogOpen)}
+                  style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span className="sidebar-icon">📑</span>
+                    <span style={{ fontWeight: 600 }}>Catalog</span>
+                  </div>
+                  <span style={{ fontSize: 11, opacity: 0.7 }}>{catalogOpen ? '▼' : '▶'}</span>
+                </div>
 
-            {catalogOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, marginBottom: 4 }}>
-                {link('/products', '📦', 'Product List', false, null, true)}
-                {isAdmin && link('/vendors', '🏢', 'Vendor List', false, null, true)}
-                {isAdmin && link('/customers', '👥', 'Customer List', false, null, true)}
+                {catalogOpen && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2, marginBottom: 4 }}>
+                    {link('/products', '📦', 'Product List', false, null, true)}
+                    {isAdmin && link('/vendors', '🏢', 'Vendor List', false, null, true)}
+                    {isAdmin && link('/customers', '👥', 'Customer List', false, null, true)}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {link('/sentiment', '💬', 'Sentiment AI')}
-        {(isAdmin || isVendor) && link('/studio', '✧', 'AI Studio')}
-        {(isAdmin || isVendor) && link('/analyst', '📊', 'AI Data Analyst')}
-        {isAdmin && link('/approvals', '⊙', 'Vendor Approvals')}
-      </nav>
+            {link('/sentiment', '💬', 'Sentiment AI')}
+            {(isAdmin || isVendor) && link('/studio', '✧', 'AI Studio')}
+            {(isAdmin || isVendor) && link('/analyst', '📊', 'AI Data Analyst')}
+            {isAdmin && link('/approvals', '⊙', 'Vendor Approvals')}
+          </nav>
+        </>
+      )}
 
       <div className="sidebar-footer">
         {session ? (
@@ -85,10 +99,12 @@ export default function Sidebar() {
         ) : (
           link('/auth', '⊕', 'Sign in')
         )}
-        <div className="sidebar-tip" style={{ marginTop: 10 }}>
-          <strong>AI product studio</strong>
-          Draft SEO-ready listings in seconds using Groq.
-        </div>
+        {!isCustomer && (
+          <div className="sidebar-tip" style={{ marginTop: 10 }}>
+            <strong>AI product studio</strong>
+            Draft SEO-ready listings in seconds using Groq.
+          </div>
+        )}
       </div>
     </aside>
   )

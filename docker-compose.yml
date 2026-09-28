@@ -14,5 +14,5 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-super-secret-production-key}
     volumes:
-      - ./shopsense.db:/app/shopsense.db
+      - ./data:/app/data
     restart: unless-stopped

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { CartProvider } from './context/CartContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
@@ -18,6 +19,14 @@ import Sentiment       from './pages/Sentiment'
 import Auth            from './pages/Auth'
 import Approvals       from './pages/Approvals'
 import Analyst         from './pages/Analyst'
+import Shop            from './pages/Shop'
+import YouMightLike    from './pages/YouMightLike'
+import Cart            from './pages/Cart'
+import Orders          from './pages/Orders'
+import Wishlists       from './pages/Wishlists'
+import ProductDetail   from './pages/ProductDetail'
+import Compare         from './pages/Compare'
+import { CompareProvider, useCompare } from './context/CompareContext'
 import ShoppingAssistant from './components/ShoppingAssistant'
 
 function RequireRole({ roles, children }) {
@@ -116,11 +125,11 @@ function AppShell() {
       <div className="main-content">
         <Topbar />
         <Routes>
-          <Route path="/"               element={<RequireAuth><Overview /></RequireAuth>} />
+          <Route path="/"               element={<RequireRole roles={['ADMIN', 'VENDOR']}><Overview /></RequireRole>} />
           <Route path="/auth"           element={<Auth />} />
-          <Route path="/recommendations" element={<RequireAuth><Recommendations /></RequireAuth>} />
-          <Route path="/sentiment"      element={<Sentiment />} />
-          <Route path="/forecasting"    element={<Forecasting />} />
+          <Route path="/recommendations" element={<RequireRole roles={['ADMIN', 'VENDOR']}><Recommendations /></RequireRole>} />
+          <Route path="/sentiment"      element={<RequireRole roles={['ADMIN', 'VENDOR']}><Sentiment /></RequireRole>} />
+          <Route path="/forecasting"    element={<RequireRole roles={['ADMIN', 'VENDOR']}><Forecasting /></RequireRole>} />
           <Route path="/analytics"      element={<RequireRole roles={['ADMIN']}><Analytics /></RequireRole>} />
           <Route path="/inventory"      element={<RequireRole roles={['ADMIN','VENDOR']}><Inventory /></RequireRole>} />
           <Route path="/segments"       element={<RequireRole roles={['ADMIN']}><Segments /></RequireRole>} />
@@ -131,12 +140,37 @@ function AppShell() {
           <Route path="/studio"         element={<RequireRole roles={['ADMIN','VENDOR']}><Studio /></RequireRole>} />
           <Route path="/analyst"        element={<RequireRole roles={['ADMIN','VENDOR']}><Analyst /></RequireRole>} />
           <Route path="/approvals"      element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
-          <Route path="*"               element={<Navigate to="/" replace />} />
+          <Route path="/shop"           element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><Shop /></RequireRole>} />
+          <Route path="/you-might-like" element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><YouMightLike /></RequireRole>} />
+          <Route path="/cart"           element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><Cart /></RequireRole>} />
+          <Route path="/orders"         element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><Orders /></RequireRole>} />
+          <Route path="/wishlists"      element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><Wishlists /></RequireRole>} />
+          <Route path="/product/:id"    element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><ProductDetail /></RequireRole>} />
+          <Route path="/compare"        element={<RequireRole roles={['ADMIN', 'CUSTOMER']}><Compare /></RequireRole>} />
+          <Route path="*"               element={<Navigate to={session?.role === 'CUSTOMER' ? '/shop' : '/'} replace />} />
         </Routes>
       </div>
 
-      {/* Floating RAG AI Shopping Assistant */}
+      {/* Floating RAG AI Shopping Assistant - hide for customers for now, or maybe they can use it? Assuming hiding if they are a customer just in case it's for vendors/admins. The prompt didn't specify, but it's a "Shopping Assistant". Let's leave it. */}
       {location.pathname !== '/auth' && <ShoppingAssistant />}
+    </div>
+  )
+}
+
+
+function CompareDock() {
+  const { compareItems, clearCompare } = useCompare()
+  const navigate = useNavigate()
+  
+  if (compareItems.length === 0) return null
+
+  return (
+    <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--canvas)', border: '1px solid var(--line)', borderRadius: 40, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.1)', zIndex: 999 }}>
+      <div style={{ fontWeight: 600 }}>{compareItems.length} / 4 Products to Compare</div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <button className="btn btn-secondary btn-sm" onClick={clearCompare}>Clear</button>
+        <button className="btn btn-primary btn-sm" onClick={() => navigate('/compare')}>Compare Now</button>
+      </div>
     </div>
   )
 }
@@ -145,9 +179,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppShell />
+        <CartProvider>
+          <CompareProvider>
+            <AppShell />
+            <CompareDock />
+          </CompareProvider>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   )
 }
-

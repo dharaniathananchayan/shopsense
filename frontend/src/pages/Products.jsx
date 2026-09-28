@@ -180,6 +180,7 @@ export default function Products() {
         price: parseFloat(editData.price),
         stock_quantity: parseInt(editData.stock_quantity, 10),
         is_active: editData.is_active,
+        image_url: editData.image_url,
       }
       const response = await api.put(`/products/${selectedProduct.id}`, payload)
       setProducts(products.map(p => p.id === response.data.id ? response.data : p))
@@ -189,6 +190,26 @@ export default function Products() {
       alert(e.response?.data?.detail || e.message)
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file || !selectedProduct) return
+    setUpdating(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await api.post(`/products/${selectedProduct.id}/image`, fd)
+      setProducts(products.map(p => p.id === res.data.id ? res.data : p))
+      setSelectedProduct(res.data)
+      setEditData(res.data)
+    } catch (err) {
+      alert(err.response?.data?.detail || err.message)
+    } finally {
+      setUpdating(false)
+      // reset file input
+      e.target.value = null
     }
   }
 
@@ -274,6 +295,7 @@ export default function Products() {
                 <table>
                   <thead>
                     <tr>
+                      <th style={{ width: 60 }}>Image</th>
                       <th>Product</th>
                       <th>Category</th>
                       <th>Price</th>
@@ -285,16 +307,23 @@ export default function Products() {
                   <tbody>
                     {loading ? (
                       [1,2,3,4,5].map(i => (
-                        <tr key={i}><td colSpan={6}><div className="skeleton skeleton-row" /></td></tr>
+                        <tr key={i}><td colSpan={7}><div className="skeleton skeleton-row" /></td></tr>
                       ))
                     ) : filtered.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
                           No products found. Create your first AI listing in the Studio.
                         </td>
                       </tr>
                     ) : filtered.map(p => (
                       <tr key={p.id}>
+                        <td>
+                          {p.image_url ? (
+                            <img src={p.image_url.startsWith('http') ? p.image_url : `http://127.0.0.1:8000${p.image_url}`} alt={p.product_name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 4 }} />
+                          ) : (
+                            <div style={{ width: 40, height: 40, background: 'var(--surface-2)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📦</div>
+                          )}
+                        </td>
                         <td>
                           <div className="td-primary">{p.product_name}</div>
                           {p.description && (
@@ -540,12 +569,33 @@ export default function Products() {
             <div className="card-body">
               {selectedProduct.image_url && !isEditing && (
                 <div style={{ marginBottom: 16, textAlign: 'center' }}>
-                  <img src={`http://127.0.0.1:8000${selectedProduct.image_url}`} alt="Product" style={{ maxWidth: '100%', maxHeight: 250, objectFit: 'contain', borderRadius: 8 }} />
+                  <img src={selectedProduct.image_url.startsWith('http') ? selectedProduct.image_url : `http://127.0.0.1:8000${selectedProduct.image_url}`} alt="Product" style={{ maxWidth: '100%', maxHeight: 250, objectFit: 'contain', borderRadius: 8 }} />
                 </div>
               )}
               
               {isEditing ? (
                 <div className="form-grid">
+                  <div className="field">
+                    <label>Product Image</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      {editData.image_url ? (
+                        <div style={{ position: 'relative', width: 60, height: 60 }}>
+                          <img src={editData.image_url.startsWith('http') ? editData.image_url : `http://127.0.0.1:8000${editData.image_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }} alt="Product" />
+                          <button className="btn btn-secondary" style={{ position: 'absolute', top: -8, right: -8, padding: 2, fontSize: 10, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditData({...editData, image_url: null})}>✕</button>
+                        </div>
+                      ) : (
+                        <div style={{ width: 60, height: 60, background: 'var(--surface-2)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📷</div>
+                      )}
+                      
+                      <div>
+                        <input type="file" id="product-img-upload" style={{ display: 'none' }} accept="image/*" onChange={handleImageUpload} />
+                        <button className="btn btn-secondary btn-sm" onClick={() => document.getElementById('product-img-upload').click()} disabled={updating}>
+                          {editData.image_url ? 'Change Image' : 'Upload Image'}
+                        </button>
+                        {editData.image_url && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Save changes to apply removal.</div>}
+                      </div>
+                    </div>
+                  </div>
                   <div className="field">
                     <label>Product Name</label>
                     <input value={editData.product_name || ''} onChange={e => setEditData({...editData, product_name: e.target.value})} />
@@ -579,12 +629,26 @@ export default function Products() {
                   <div><strong>Category:</strong> {selectedProduct.category || 'N/A'}</div>
                   <div><strong>Price:</strong> ₹{Number(selectedProduct.price).toFixed(2)}</div>
                   <div><strong>Stock:</strong> {selectedProduct.stock_quantity}</div>
-                  {selectedProduct.tags && <div><strong>Tags:</strong> {selectedProduct.tags}</div>}
+                  {selectedProduct.tags && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <strong>Tags:</strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {(Array.isArray(selectedProduct.tags) 
+                          ? selectedProduct.tags 
+                          : selectedProduct.tags.replace(/[\[\]'"]/g, '').split(selectedProduct.tags.includes(',') ? ',' : ' ').map(t => t.trim()).filter(Boolean)
+                        ).map((tag, i) => (
+                          <span key={i} className="badge badge-ghost" style={{ letterSpacing: 'normal' }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div><strong>Description:</strong> <div style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{selectedProduct.description}</div></div>
                   
-                  <div style={{ marginTop: 16 }}>
-                    <button className="btn btn-primary" onClick={() => setIsEditing(true)}>Edit Product</button>
-                  </div>
+                  {session?.role !== 'CUSTOMER' && (
+                    <div style={{ marginTop: 16 }}>
+                      <button className="btn btn-primary" onClick={() => setIsEditing(true)}>Edit Product</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
