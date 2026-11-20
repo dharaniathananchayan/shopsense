@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api/v1` 
+  : (import.meta.env.DEV ? '/api/v1' : 'https://shopsense-xkn1.onrender.com/api/v1')
+
 const api = axios.create({
-  baseURL: '/api/v1'
+  baseURL: API_BASE
 })
 
 // Inject Bearer token from localStorage before every request
