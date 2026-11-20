@@ -24,13 +24,34 @@ from app.routers import (
 Base.metadata.create_all(bind=engine)
 apply_sqlite_migrations()
 
-# Auto-seed initial data if database is empty
+# Auto-seed initial data and default users if missing
 try:
-    from app.models import Product
+    from app.models import Product, Vendor
+    from app.models.user import User
     from app.seed import seed_data
+    from app.utils.security import hash_password
     with SessionLocal() as db:
         if db.query(Product).count() == 0:
             seed_data()
+        else:
+            first_vendor = db.query(Vendor).first()
+            v_id = first_vendor.id if first_vendor else None
+            default_users = [
+                ("johndoe@gmail.com", "John Doe", "ADMIN", None, "admin123"),
+                ("janedoe@gmail.com", "Jane Doe", "VENDOR", v_id, "password123"),
+                ("firstcustomer@gmail.com", "First Customer", "CUSTOMER", None, "password123"),
+            ]
+            for email, name, role, vendor_id, pwd in default_users:
+                if not db.query(User).filter_by(email=email).first():
+                    db.add(User(
+                        email=email,
+                        hashed_password=hash_password(pwd),
+                        full_name=name,
+                        role=role,
+                        vendor_id=vendor_id,
+                        approval_status="APPROVED",
+                    ))
+            db.commit()
 except Exception as e:
     print(f"Auto-seed check notice: {e}")
 
