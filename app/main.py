@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.config import APP_TITLE, APP_VERSION, APP_DESCRIPTION
-from app.database import engine, Base, apply_sqlite_migrations
+from app.database import engine, Base, apply_sqlite_migrations, SessionLocal
 from app.routers import (
     vendors,
     products,
@@ -23,6 +23,16 @@ from app.routers import (
 # Create all tables
 Base.metadata.create_all(bind=engine)
 apply_sqlite_migrations()
+
+# Auto-seed initial data if database is empty
+try:
+    from app.models import Product
+    from app.seed import seed_data
+    with SessionLocal() as db:
+        if db.query(Product).count() == 0:
+            seed_data()
+except Exception as e:
+    print(f"Auto-seed check notice: {e}")
 
 app = FastAPI(
     title=APP_TITLE,
