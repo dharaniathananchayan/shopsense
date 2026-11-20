@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://shopsense-xkn1.onrender.com/api/:path*"
+    },
+    {
+      "source": "/static/:path*",
+      "destination": "https://shopsense-xkn1.onrender.com/static/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
